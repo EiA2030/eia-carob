@@ -221,12 +221,12 @@ carob_script <- function(path) {
   
   d3$weeding_done <- ifelse(d3$weeding_times > 0, TRUE, FALSE)
   
-  d3 <- d3[!with(d3, is.na(d3$harvest_date) & is.na(d3$crop_price) & is.na(d3$plot_area) & is.na(d3$yield_part) & is.na(d3$yield_marketable) & is.na(d3$fw_yield) & is.na(d3$yield_moisture)),]
+  d4 <- d3[!with(d3, is.na(d3$harvest_date) & is.na(d3$crop_price) & is.na(d3$plot_area) & is.na(d3$yield_part) & is.na(d3$yield_marketable) & is.na(d3$fw_yield)),]
   
-  d3$yield_marketable <- ifelse(d3$crop == "potato", as.numeric(d3$yield_marketable/(d3$plot_area/10000)), (d3$yield_marketable*(1-(d3$yield_moisture/100))/(d3$plot_area/10000)))
-  d3$fw_yield <- ifelse(d3$crop == "potato", as.numeric(d3$fw_yield/(d3$plot_area/10000)), (d3$fw_yield*(1-(d3$yield_moisture/100))/(d3$plot_area/10000)))
-  d3$yield <- d3$fw_yield
+  d4$yield_marketable <- ifelse(d4$crop == "potato", as.numeric(d4$yield_marketable/(d4$plot_area/10000)), (d4$yield_marketable*(1-(d4$yield_moisture/100))/(d4$plot_area/10000)))
+  d4$fw_yield <- ifelse(d4$crop == "potato", as.numeric(d4$fw_yield/(d4$plot_area/10000)), (d4$fw_yield*(1-(d4$yield_moisture/100))/(d4$plot_area/10000)))
+  d4$yield <- d4$fw_yield
   
-  carobiner::write_files(meta, d3, path=path)
+  carobiner::write_files(meta, d4, path=path)
   
 }
