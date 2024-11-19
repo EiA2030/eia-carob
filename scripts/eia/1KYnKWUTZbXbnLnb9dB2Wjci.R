@@ -1,8 +1,8 @@
 # R script for EiA version of"carob"
 
 ## ISSUES
-# 1. Needs finalizing
-# 2. Need to add several weeding times
+# 1. Need to add several weeding times
+# 2. Review...
 
 carob_script <- function(path) {
    
@@ -30,7 +30,7 @@ carob_script <- function(path) {
       carob_contributor = 'Eduardo Garcia Bendito',
       data_type = "survey",
       carob_date="2024-11-14",
-      notes = "Field boundary available (but not captured)"
+      notes = "Field boundary available (but not captured)."
    )
    
    ff <- carobiner::get_data(uri = uri, path = path, group = group, files = list.files("~/carob-eia/data/raw/eia/Chinyanja-Solidaridad-Soy-CropCut", full.names = T))
@@ -100,7 +100,7 @@ carob_script <- function(path) {
      adm4 = r2$section,
      longitude = as.numeric(r2$field_gps_longitude),
      latitude = as.numeric(r2$field_gps_latitude),
-     plot_area = r2$plot_geotraced_area_m2,
+     plot_area = as.numeric(r2$plot_geotraced_area_m2),
      geo_uncertainty = r2$field_gps_precision,
      elevation = r2$field_gps_altitude,
      geo_from_source = TRUE,
@@ -146,56 +146,132 @@ carob_script <- function(path) {
                              ifelse(d$disease_severity == 2, "Low",
                                     ifelse(d$disease_severity == 3, "High", "Very High")))
    
-   # # Format fertilizer information
+   # EGB:
+   # # Fertilizer type
    d$fertilizer_type1[grepl("NPK", d$fertilizer_type1, ignore.case = TRUE)] <- gsub("NPK", "NPK", d$fertilizer_type1[grepl("NPK", d$fertilizer_type1, ignore.case = TRUE)], ignore.case = TRUE)
    d$fertilizer_type2[grepl("NPK", d$fertilizer_type2, ignore.case = TRUE)] <- gsub("NPK", "NPK", d$fertilizer_type2[grepl("NPK", d$fertilizer_type2, ignore.case = TRUE)], ignore.case = TRUE)
    d$fertilizer_type1[grepl("urea", d$fertilizer_type1, ignore.case = TRUE)] <- gsub("urea", "urea", d$fertilizer_type1[grepl("urea", d$fertilizer_type1, ignore.case = TRUE)], ignore.case = TRUE)
    d$fertilizer_type2[grepl("urea", d$fertilizer_type2, ignore.case = TRUE)] <- gsub("Area", "urea", gsub("Ureia", "urea", gsub("urea", "urea", d$fertilizer_type2[grepl("urea", d$fertilizer_type2, ignore.case = TRUE)], ignore.case = TRUE)))
+   d$fertilizer_type2[grepl("Ureia", d$fertilizer_type2, ignore.case = TRUE)] <- "urea"
+   d$fertilizer_type2[grepl("Area", d$fertilizer_type2, ignore.case = TRUE)] <- "urea"
+   d$fertilizer_type1[grepl("and", d$fertilizer_type1, ignore.case = TRUE)] <- "NPK; urea"
+   d$fertilizer_type1[grepl("NKP", d$fertilizer_type1, ignore.case = TRUE)] <- "NPK"
    d$fertilizer_type1[grepl("D compound/urea", d$fertilizer_type1, ignore.case = TRUE)] <- "D-compound; urea"
    d$fertilizer_type1[grepl("pound", d$fertilizer_type1, ignore.case = TRUE)] <- "D-compound"
    d$fertilizer_type2[grepl("pound", d$fertilizer_type2, ignore.case = TRUE)] <- "D-compound"
    d$fertilizer_type1[grepl("chitowe", d$fertilizer_type1, ignore.case = TRUE)] <- "chitowe"
    d$fertilizer_type2[grepl("chitowe", d$fertilizer_type2, ignore.case = TRUE)] <- "chitowe"
-   d$fertilizer_type1[grepl("23", d$fertilizer_type1, ignore.case = TRUE)] <- "N23N214S"
-   d$fertilizer_type2[grepl("23", d$fertilizer_type2, ignore.case = TRUE)] <- "N23N214S"
+   d$fertilizer_type1[grepl("23", d$fertilizer_type1, ignore.case = TRUE)] <- "N23P21S4"
+   d$fertilizer_type2[grepl("23", d$fertilizer_type2, ignore.case = TRUE)] <- "N23P21S4"
    d$fertilizer_type1[grepl("Super", d$fertilizer_type1, ignore.case = TRUE)] <- "unknown"
    d$fertilizer_type2[grepl("Super", d$fertilizer_type2, ignore.case = TRUE)] <- "unknown"
-   d$fertilizer_type1[grepl("ocula", d$fertilizer_type1, ignore.case = TRUE)] <- NA
-   d$fertilizer_type2[grepl("Can", d$fertilizer_type2, ignore.case = TRUE)] <- "CAN"
-   
-   
-   unique(d$fertilizer_type1)
-   
-   
-   d$N_fertilizer[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] * 0.16
-   d$P_fertilizer[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] * 0.05
-   d$S_fertilizer[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] * 0.04
-   d$fertilizer_type[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)] <- gsub("NPK NPK", "NPK", gsub("Chitowe", "NPK", d$fertilizer_type[grepl("chitowe", d$fertilizer_type, ignore.case = TRUE)]))
-   d$fertilizer_type[grepl("NPK", d$fertilizer_type, ignore.case = TRUE)] <- gsub("NPK", "NPK", d$fertilizer_type[grepl("NPK", d$fertilizer_type, ignore.case = TRUE)], ignore.case = TRUE)
-   d$fertilizer_type[grepl("UREA", d$fertilizer_type, ignore.case = TRUE)] <- gsub("UREA", "urea", d$fertilizer_type[grepl("UREA", d$fertilizer_type, ignore.case = TRUE)], ignore.case = TRUE)
-   d$fertilizer_type[grepl("Ureia", d$fertilizer_type, ignore.case = TRUE)] <- "NPK; urea"
-   d$fertilizer_type[grepl("compound", d$fertilizer_type, ignore.case = TRUE)] <- gsub("DCompound", "D-compound", gsub("D  compound", "D-compound", gsub("D compound", "D-compound", d$fertilizer_type[grepl("compound", d$fertilizer_type, ignore.case = TRUE)], ignore.case = TRUE)))
-   d$N_fertilizer[grepl("23", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("23", d$fertilizer_type, ignore.case = TRUE)] * 0.23
-   d$P_fertilizer[grepl("23", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("23", d$fertilizer_type, ignore.case = TRUE)] * 0.21
-   d$S_fertilizer[grepl("23", d$fertilizer_type, ignore.case = TRUE)] <- d$fertilizer_amount[grepl("23", d$fertilizer_type, ignore.case = TRUE)] * 0.04
-   d$fertilizer_type[grepl("23", d$fertilizer_type, ignore.case = TRUE)] <- "NPK"
+   d$fertilizer_type1[grepl("Solubor", d$fertilizer_type1, ignore.case = TRUE)] <- NA # Micronutrient fertilizer (only 2 records)
    d$inoculated <- FALSE
-   d$inoculated[grepl("ocula", d$fertilizer_type, ignore.case = TRUE)] <- TRUE # "ocula" for all instances of inoculate...
-   d$fertilizer_type[grepl("ocula", d$fertilizer_type, ignore.case = TRUE)] <- NA
-   d$fertilizer_type <- gsub("None; ", "", gsub("; None", "", gsub("Super D", "S-compound", gsub("Can", "CAN", gsub("NPK; NPK", "NPK", gsub("Area", "urea", gsub("urea; urea", "urea", gsub("NKP", "NPK; ", gsub("NPK NPK; ", "NPK; ", gsub("Basal dressing Compound D", "D-compound", gsub("50; ", "", gsub("NA; ", "", gsub("; NA", "", d$fertilizer_type)))))))))))))
-   d$fertilizer_type[grepl(" and ", d$fertilizer_type, ignore.case = TRUE)] <- "NPK; urea"
-   d$fertilizer_type[grepl(" and ", d$fertilizer_type, ignore.case = TRUE)] <- "NPK; urea"
+   d$inoculated[grepl("ocula", d$fertilizer_type1, ignore.case = TRUE)] <- TRUE # "ocula" for all instances of inoculate...
+   d$fertilizer_type1[grepl("ocula", d$fertilizer_type1, ignore.case = TRUE)] <- NA
+   d$fertilizer_type1[grepl("50", d$fertilizer_type1, ignore.case = TRUE)] <- NA
+   d$fertilizer_type1[grepl("NA", d$fertilizer_type1, ignore.case = TRUE)] <- NA
+   d$fertilizer_type2[grepl("Can", d$fertilizer_type2, ignore.case = TRUE)] <- "CAN"
    d$OM_used <- NA
-   d$OM_used[grepl("Chimato", d$fertilizer_type, ignore.case = TRUE)] <- TRUE
    d$OM_type <- NA
-   d$OM_type[grepl("Chimato", d$fertilizer_type, ignore.case = TRUE)] <- "chimato" # Apparently a Malawian OM type (https://plantwiseplusknowledgebank.org/doi/full/10.1079/pwkb.20237800252)
-   d$fertilizer_type[grepl("Chimato", d$fertilizer_type, ignore.case = TRUE)] <- NA
-   d$fertilizer_type <- gsub("D-compound/urea", "D-compound; urea", d$fertilizer_type)
-   d$fertilizer_type <- gsub("NA", NA, d$fertilizer_type)
-   d$fertilizer_type <- gsub("NPKurea", "NPK; urea", gsub("NPK; ", "NPK", d$fertilizer_type))
+   d$OM_type[grep("Chimato", d$fertilizer_type1, ignore.case = TRUE)] <- "compost"
+   d$OM_amount <- NA
+   d$OM_amount[grep("Chimato", d$fertilizer_type1, ignore.case = TRUE)] <- d$fertilizer_amount1[grep("Chimato", d$fertilizer_type1, ignore.case = TRUE)]
    
+   # EGB:
+   # # Fertilizer amounts
+   d$fertilizer_amount <- NA
+   d$fertilizer_amount <- rowSums(d[,c("fertilizer_amount1", "fertilizer_amount2")], na.rm = TRUE)/(d$plot_area/10000)
    
+   # EGB:
+   # # Nutrient amounts
+   d$N_fertilizer1 <- NA
+   d$N_fertilizer1[grep("urea", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("urea", d$fertilizer_type1)] * 0.46
+   d$N_fertilizer1[grep("CAN", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("CAN", d$fertilizer_type1)] * 0.26
+   d$N_fertilizer1[grep("chitowe", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("chitowe", d$fertilizer_type1)] * 0.16
+   d$N_fertilizer1[grep("N23P21S4", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("N23P21S4", d$fertilizer_type1)] * 0.23
+   d$N_fertilizer1[grep("D-compound", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("D-compound", d$fertilizer_type1)] * 0.10
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] * 0.23
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] * 0.12
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] * 0.27
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))])/2 * 0.23 + (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))])/2 * 0.46
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))])/2 * 0.12 + (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))])/2 * 0.46
+   d$N_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))])/2 * 0.27 + (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))])/2 * 0.46
+   d$P_fertilizer1 <- NA
+   d$P_fertilizer1[grep("chitowe", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("chitowe", d$fertilizer_type1)] * 0.05
+   d$P_fertilizer1[grep("N23P21S4", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("N23P21S4", d$fertilizer_type1)] * 0.21
+   d$P_fertilizer1[grep("D-compound", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("D-compound", d$fertilizer_type1)] * 0.20
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] * 0.10
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] * 0.24
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] * 0.06
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))])/2 * 0.10
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))])/2 * 0.24
+   d$P_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))])/2 * 0.06
+   d$K_fertilizer1 <- NA
+   d$K_fertilizer1[grep("D-compound", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("D-compound", d$fertilizer_type1)] * 0.10
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] * 0.05
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] * 0.12
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] * 0.06
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount1))])/2 * 0.05
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount1))])/2 * 0.12
+   d$K_fertilizer1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))] <- (d$fertilizer_amount1[which(d$fertilizer_type1 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount1))])/2 * 0.06
+   d$S_fertilizer1 <- NA
+   d$S_fertilizer1[grep("N23P21S4", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("N23P21S4", d$fertilizer_type1)] * 0.04
+   d$S_fertilizer1[grep("D-compound", d$fertilizer_type1)] <- d$fertilizer_amount1[grep("D-compound", d$fertilizer_type1)] * 0.09
+   # Second fertilization
+   d$N_fertilizer2 <- NA
+   d$N_fertilizer2[grep("urea", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("urea", d$fertilizer_type2)] * 0.46
+   d$N_fertilizer2[grep("CAN", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("CAN", d$fertilizer_type2)] * 0.26
+   d$N_fertilizer2[grep("chitowe", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("chitowe", d$fertilizer_type2)] * 0.16
+   d$N_fertilizer2[grep("N23P21S4", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("N23P21S4", d$fertilizer_type2)] * 0.23
+   d$N_fertilizer2[grep("D-compound", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("D-compound", d$fertilizer_type2)] * 0.10
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] * 0.23
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] * 0.12
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] * 0.27
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))])/2 * 0.23 + (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))])/2 * 0.46
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))])/2 * 0.12 + (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))])/2 * 0.46
+   d$N_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))])/2 * 0.27 + (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))])/2 * 0.46
+   d$P_fertilizer2 <- NA
+   d$P_fertilizer2[grep("chitowe", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("chitowe", d$fertilizer_type2)] * 0.05
+   d$P_fertilizer2[grep("N23P21S4", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("N23P21S4", d$fertilizer_type2)] * 0.21
+   d$P_fertilizer2[grep("D-compound", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("D-compound", d$fertilizer_type2)] * 0.20
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] * 0.10
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] * 0.24
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] * 0.06
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))])/2 * 0.10
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))])/2 * 0.24
+   d$P_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))])/2 * 0.06
+   d$K_fertilizer2 <- NA
+   d$K_fertilizer2[grep("D-compound", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("D-compound", d$fertilizer_type2)] * 0.10
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] * 0.05
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] * 0.12
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] * 0.06
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Malawi" & !is.na(d$fertilizer_amount2))])/2 * 0.05
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Mozambique" & !is.na(d$fertilizer_amount2))])/2 * 0.12
+   d$K_fertilizer2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))] <- (d$fertilizer_amount2[which(d$fertilizer_type2 == "NPK; urea" & d$country == "Zambia" & !is.na(d$fertilizer_amount2))])/2 * 0.06
+   d$S_fertilizer2 <- NA
+   d$S_fertilizer2[grep("N23P21S4", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("N23P21S4", d$fertilizer_type2)] * 0.04
+   d$S_fertilizer2[grep("D-compound", d$fertilizer_type2)] <- d$fertilizer_amount2[grep("D-compound", d$fertilizer_type2)] * 0.09
+   # Add up
+   d$N_fertilizer <- (d$N_fertilizer1 + d$N_fertilizer2)/(d$plot_area/10000)
+   d$P_fertilizer <- (d$P_fertilizer1 + d$P_fertilizer2)/(d$plot_area/10000)
+   d$K_fertilizer <- (d$K_fertilizer1 + d$K_fertilizer2)/(d$plot_area/10000)
+   d$S_fertilizer <- (d$S_fertilizer1 + d$S_fertilizer2)/(d$plot_area/10000)
+   # Formatting
+   d$fertilizer_type1[grepl("chimato", d$fertilizer_type1, ignore.case = TRUE)] <- NA
+   d$fertilizer_type1[grepl("chitowe", d$fertilizer_type1, ignore.case = TRUE)] <- "NPK"
+   d$fertilizer_type2[grepl("chitowe", d$fertilizer_type2, ignore.case = TRUE)] <- "NPK"
+   d$fertilizer_type1[grepl("N23P21S4", d$fertilizer_type1, ignore.case = TRUE)] <- "NPK"
+   d$fertilizer_type <- paste0(d$fertilizer_type1, "; ", d$fertilizer_type2)
+   d$fertilizer_type <- gsub("NA", NA, gsub("; NA", "", gsub("NA; ", "", gsub("NA; NA", NA, gsub("urea; urea", "urea", gsub("NPK; NPK", "NPK", gsub("None; None", "None", gsub("None; ", "", gsub("; None", "", d$fertilizer_type)))))))))
+   d$fertilizer_type1 <- d$fertilizer_type2 <- d$fertilizer_amount1 <- d$fertilizer_amount2 <- NULL
+   d$N_fertilizer1 <- d$N_fertilizer2 <- d$P_fertilizer1 <- d$P_fertilizer2 <- d$K_fertilizer1 <- d$K_fertilizer2 <- d$S_fertilizer1 <- d$S_fertilizer2 <- NULL
+   
+   # Format currency
+   d$currency[grepl("Malaw", d$currency, ignore.case = TRUE)] <- "MWK"
+   d$currency[grepl("Meticais", d$currency, ignore.case = TRUE)] <- "MZN"
+   d$currency[grepl("Zamb", d$currency, ignore.case = TRUE)] <- "ZMW"
 
-   # carobiner::write_files(meta, d, path=path)
+   carobiner::write_files(meta, d, path=path)
    
 }
