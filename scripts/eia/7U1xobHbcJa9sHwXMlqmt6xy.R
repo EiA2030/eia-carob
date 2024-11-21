@@ -32,7 +32,7 @@ carob_script <- function(path) {
       activity = 'addon',
       treatment_vars= "none",
       response_vars= "none",
-      project = 'Excellence in Agronomy ',
+      project = 'Excellence in Agronomy',
       data_type = "survey",
       carob_date="2024-11-20",
       notes= NA
