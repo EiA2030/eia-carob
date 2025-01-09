@@ -32,3 +32,4 @@ For additional information on what is carob and how it is used, please visit [ht
 | [ZhlNGvfIy9DNUdaDXvQkTBMC](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/ZhlNGvfIy9DNUdaDXvQkTBMC.R) | NG-Akilimo-SAA | USC008 | validation | SA-PlantingDate-Validation |
 | [hdl_11529_10549106](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/hdl_11529_10549106.R) | LatAm-AgroTutor | USC005 | validation | NA |
 | [1KYnKWUTZbXbnLnb9dB2Wjci](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/1KYnKWUTZbXbnLnb9dB2Wjci.R) | CH-CerLeg-Solidaridad | USC016 | other | Chinyanja-Solidaridad-Soy-CropCut |
+| [nQP55u8hzVTUSZPgrY9ZGwKd](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/nQP55u8hzVTUSZPgrY9ZGwKd.R) | CH-CerLeg-Solidaridad | USC016 | validation | Chinyanja-Solidaridad-Soy-Validation |
