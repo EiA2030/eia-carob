@@ -203,43 +203,43 @@ carob_script <- function(path) {
    d3p1 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p1`[2:length(r1$`harvest_section/fresh_weight_p1`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p1`[2:length(r1$`harvest_section/fresh_weight_p1`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    d3p2 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p2`[2:length(r1$`harvest_section/fresh_weight_p2`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p2`[2:length(r1$`harvest_section/fresh_weight_p2`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    d3p3 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p3`[2:length(r1$`harvest_section/fresh_weight_p3`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p3`[2:length(r1$`harvest_section/fresh_weight_p3`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    d3p4 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p4`[2:length(r1$`harvest_section/fresh_weight_p4`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p4`[2:length(r1$`harvest_section/fresh_weight_p4`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    d3p5 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p5`[2:length(r1$`harvest_section/fresh_weight_p5`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p5`[2:length(r1$`harvest_section/fresh_weight_p5`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    d3p6 <- data.frame(
      trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
      harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p6`[2:length(r1$`harvest_section/fresh_weight_p6`)])
-     # crop_price = as.integer(r1$`harvest_section/product_price`) / 1000
+     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p6`[2:length(r1$`harvest_section/fresh_weight_p6`)]),
+     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
    )
    
    # Merge d2 (management) & d3 (yield)
@@ -257,6 +257,12 @@ carob_script <- function(path) {
    
    # Remove duplicates
    d <- d[!duplicated(d), ]
+   
+   d$crop_price <- ifelse(d$crop_price < 1, d$crop_price * 1000,
+                          ifelse(d$crop_price < 10, d$crop_price * 100,
+                                 ifelse(d$crop_price < 100, d$crop_price * 10, d$crop_price)))
+   
+   d$currency <- "NGN"
 
    carobiner::write_files(meta, dd, path=path)
    
