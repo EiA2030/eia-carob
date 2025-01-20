@@ -41,6 +41,7 @@ carob_script <- function(path) {
   # Retrieve relevant file(s)
   f1 <- ff[basename(ff) == "20241216152659_EiA_Solidaridad_Validation_raw_2023.xlsx"]
   f2 <- ff[basename(ff) == "20241216152659_EiA_Solidaridad_Validation_raw_2024.xlsx"]
+  
   # Read relevant file(s)
   r1 <- readxl::read_excel(f1)
   r2 <- readxl::read_excel(f2)
@@ -54,222 +55,304 @@ carob_script <- function(path) {
     elevation = round(as.numeric(r1[[15]][2:length(r1[[15]])]), 0),
     geo_uncertainty = round(as.numeric(r1[[16]][2:length(r1[[16]])]), 1),
     geo_from_source = TRUE,
+    trial_id = ifelse(is.na(r1[[7]][2:length(r1[[7]])]), r1[[8]][2:length(r1[[8]])], r1[[7]][2:length(r1[[7]])])
+  )
+  
+  # Filter d to single trial_id records, with lowest geo_uncertinty
+  d1 <- do.call(rbind, lapply(split(d1, d1$trial_id), function(d1) {d1[d1$geo_uncertainty == min(d1$geo_uncertainty), , drop = FALSE]}))
+  row.names(d1) <- 1:nrow(d1)
+  d1 <- d1[!duplicated(d1) & complete.cases(d1),]
+  
+  # Process land preparation and description data
+  d2 <- data.frame(
     trial_id = ifelse(is.na(r1[[7]][2:length(r1[[7]])]), r1[[8]][2:length(r1[[8]])], r1[[7]][2:length(r1[[7]])]),
-    irrigated = ifelse(r1[[25]][2:length(r1[[25]])] == "rainfed", FALSE, TRUE),
-    previous_crop = ifelse(sub(" .*", "", r1[[26]][2:length(r1[[26]])]) == "other", NA, sub(" .*", "", r1[[26]][2:length(r1[[26]])]))
+    previous_crop = ifelse(sub(" .*", "", r1$`land_preparation/previous_crop`[2:length(r1$`land_preparation/previous_crop`)]) == "other", NA, sub(" .*", "", r1$`land_preparation/previous_crop`[2:length(r1$`land_preparation/previous_crop`)])),
+    previous_fertilizer = ifelse(r1$`land_preparation/inorganic_fertilizer_previous_season`[2:length(r1$`land_preparation/inorganic_fertilizer_previous_season`)] == "no", FALSE, TRUE),
+    previous_OM = ifelse(r1$`land_preparation/organic_fertilizer_previous_season`[2:length(r1$`land_preparation/organic_fertilizer_previous_season`)] == "no", FALSE, TRUE),
+    irrigated = ifelse(r1$`land_preparation/irrigation_technique`[2:length(r1$`land_preparation/irrigation_technique`)] == "rainfed", FALSE, TRUE),
+    previous_crop_residue_management	= r1$`land_preparation/residue_management`[2:length(r1$`land_preparation/residue_management`)],
+    previous_crop_residue_perc = r1$`land_preparation/residue_remaining`[2:length(r1$`land_preparation/residue_remaining`)],
+    land_prep_method = r1$`land_preparation/land_preparation`[2:length(r1$`land_preparation/land_preparation`)]
   )
+  d2$previous_crop_residue_perc <- ifelse(d2$previous_crop_residue_perc == "0", 0,
+                                          ifelse(d2$previous_crop_residue_perc == "1_49", 33.3,
+                                                 ifelse(d2$previous_crop_residue_perc == "50_99", 66.6, 100)))
   
-  d1 <- d1[complete.cases(d1),]
-  
-  # Actual farmer's practices
-  d1p1 <- data.frame(
+  # Process plot management data
+  d2p <- data.frame(
     trial_id = ifelse(is.na(r1[[7]][2:length(r1[[7]])]), r1[[8]][2:length(r1[[8]])], r1[[7]][2:length(r1[[7]])]),
-    event = r1[[9]][2:length(r1[[7]])],
-    crop = r1[[120]][2:length(r1[[120]])],
-    variety = r1[[156]][2:length(r1[[156]])],
-    planting_date = as.character(as.Date(as.integer(r1[[157]][2:length(r1[[157]])]), origin = "1900-01-01")),
-    # EGB:
-    # # Need to convert to plants/ha (How to convert seed/ha to plant/ha or kg/ha to plant/ha?)
-    seed_density = ifelse(r1[[159]][2:length(r1[[159]])] == "plants/m2",
-                          as.numeric(r1[[160]][2:length(r1[[160]])])*10000, NA),
-    planting_method = sub("_", " ", r1[[161]][2:length(r1[[161]])]),
-    intercrops = ifelse(sub(" .*", "", r1[[165]][2:length(r1[[165]])]) == "other", NA, sub(" .*", "", r1[[165]][2:length(r1[[165]])])),
-    row_spacing = ifelse(as.numeric(r1[[201]][2:length(r1[[201]])]) >= 1, as.numeric(r1[[201]][2:length(r1[[201]])]), as.numeric(r1[[201]][2:length(r1[[201]])])*100),
-    plant_spacing = ifelse(as.numeric(r1[[202]][2:length(r1[[202]])])*100 > 100, as.numeric(r1[[202]][2:length(r1[[202]])]), as.numeric(r1[[202]][2:length(r1[[202]])])*100),
-    # plot_length = as.numeric(r1[[369]][2:length(r1[[369]])]),
-    # plot_width = as.numeric(r1[[370]][2:length(r1[[370]])]),
-    # plot_area = as.numeric(r1[[371]][2:length(r1[[371]])]),
-    fertilizer_used = ifelse(r1[[405]][2:length(r1[[405]])] != "none", TRUE, FALSE),
-    fertilizer_type = ifelse(r1[[405]][2:length(r1[[405]])] != "none", gsub("other", "unknown", gsub("compoundD", "D-compound	", sub(" .*", "", r1[[405]][2:length(r1[[405]])]))), NA),
-    fertilizer_date = as.character(as.Date(as.integer(r1[[418]][2:length(r1[[418]])]), origin = "1900-01-01")),
-    fertilizer_amount = rowSums(apply(as.matrix(r1[2:nrow(r1[419:426]), 419:426]), 2, as.numeric), na.rm = TRUE),
-    N_fertilizer = as.numeric(r1[[425]][2:length(r1[[425]])])*0.1,
-    P_fertilizer = as.numeric(r1[[425]][2:length(r1[[425]])])*0.2,
-    K_fertilizer = as.numeric(r1[[425]][2:length(r1[[425]])])*0.1
+    treatment_p1 = "Farmer Practices",
+    plot_length_p1 = as.numeric(r1$`layout_p1/plot_lenght_m_p1`[2:length(r1$`layout_p1/plot_lenght_m_p1`)]),
+    plot_width_p1 = as.numeric(r1$`layout_p1/plot_width_m_p1`[2:length(r1$`layout_p1/plot_width_m_p1`)]),
+    plot_area_p1 = as.numeric(r1$`layout_p1/plot_area_p1`[2:length(r1$`layout_p1/plot_area_p1`)]),
+    crop_p1 = r1$`planting_p1/crop_cultivated_p1`[2:length(r1$`planting_p1/crop_cultivated_p1`)],
+    variety_p1 = r1$`planting_p1/variety_p1`[2:length(r1$`planting_p1/variety_p1`)],
+    planting_date_p1 = as.character(as.Date(as.integer(r1$`planting_p1/planting_date_p1`[2:length(r1$`planting_p1/planting_date_p1`)]), origin = "1900-01-01")),
+    seed_density_p1 = as.numeric(r1$`planting_p1/planting_population_p1`[2:length(r1$`planting_p1/planting_population_p1`)]),
+    planting_method_p1 = r1$`planting_p1/planting_technique_p1`[2:length(r1$`planting_p1/planting_technique_p1`)],
+    intercrop_p1 = ifelse(sub(" .*", "", r1$`planting_p1/intercrop_p1`[2:length(r1$`planting_p1/intercrop_p1`)]) == "other", NA, sub(" .*", "", r1$`planting_p1/intercrop_p1`[2:length(r1$`planting_p1/intercrop_p1`)])),
+    row_spacing_p1 = as.integer(r1$`planting_p1/row_spacing_p1`[2:length(r1$`planting_p1/row_spacing_p1`)]),
+    plant_spacing_p1 = as.integer(r1$`planting_p1/plant_spacing_p1`[2:length(r1$`planting_p1/plant_spacing_p1`)]),
     
-    # fertilizer_price = (as.numeric(r1[[419]][2:length(r1[[419]])])/50)*as.numeric(r1[[471]][2:length(r1[[471]])]) +
-    #   (as.numeric(r1[[420]][2:length(r1[[420]])])/50)*as.numeric(r1[[472]][2:length(r1[[472]])]) +
-    #   (as.numeric(r1[[421]][2:length(r1[[421]])])/50)*as.numeric(r1[[473]][2:length(r1[[473]])]) +
-    #   (as.numeric(r1[[422]][2:length(r1[[422]])])/50)*as.numeric(r1[[474]][2:length(r1[[474]])]) +
-    #   (as.numeric(r1[[423]][2:length(r1[[423]])])/50)*as.numeric(r1[[475]][2:length(r1[[475]])]) +
-    #   (as.numeric(r1[[424]][2:length(r1[[424]])])/50)*as.numeric(r1[[476]][2:length(r1[[476]])]) +
-    #   (as.numeric(r1[[425]][2:length(r1[[425]])])/50)*as.numeric(r1[[477]][2:length(r1[[477]])]) +
-    #   (as.numeric(r1[[426]][2:length(r1[[426]])])/50)*as.numeric(r1[[478]][2:length(r1[[478]])]),
+    fertilizer_type_p1 = gsub("other", "unknown", gsub(" ", ";", r1$`fertilizer_p1/fertilizer_name_p1`[2:length(r1$`fertilizer_p1/fertilizer_name_p1`)])),
+    fertilizer_date_p1 = as.character(as.Date(as.integer(r1$`fertilizer_p1/fertilizer_date_p1`[2:length(r1$`fertilizer_p1/fertilizer_date_p1`)]), origin = "1900-01-01")),
+    fertilizer_amount_p1 = rowSums(data.frame(lapply(r1[2:nrow(r1), c("fertilizer_p1/urea_amount_p1", "fertilizer_p1/tsp_amount_p1",
+                                                                      "fertilizer_p1/dap_amount_p1", "fertilizer_p1/mop_amount_p1",
+                                                                      "fertilizer_p1/npk_amount_p1", "fertilizer_p1/soymix_amount_p1",
+                                                                      "fertilizer_p1/compoundD_amount_p1", "fertilizer_p1/superD_amount_p1")],
+                                                     function(x) as.numeric(as.character(x)))),
+                                   na.rm = TRUE),
+    N_fertilizer_p1 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p1/urea_amount_p1`[2:length(r1$`fertilizer_p1/urea_amount_p1`)]) * 0.46,
+                                               as.integer(r1$`fertilizer_p1/dap_amount_p1`[2:length(r1$`fertilizer_p1/dap_amount_p1`)]) * 0.18,
+                                               as.integer(r1$`fertilizer_p1/npk_amount_p1`[2:length(r1$`fertilizer_p1/npk_amount_p1`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p1/soymix_amount_p1`[2:length(r1$`fertilizer_p1/soymix_amount_p1`)]) * 0.07,
+                                               as.integer(r1$`fertilizer_p1/compoundD_amount_p1`[2:length(r1$`fertilizer_p1/compoundD_amount_p1`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p1/superD_amount_p1`[2:length(r1$`fertilizer_p1/superD_amount_p1`)]) * 0.08)),
+                              na.rm = TRUE),
+    P_fertilizer_p1 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p1/tsp_amount_p1`[2:length(r1$`fertilizer_p1/tsp_amount_p1`)]) * 0.19,
+                                               as.integer(r1$`fertilizer_p1/dap_amount_p1`[2:length(r1$`fertilizer_p1/dap_amount_p1`)]) * 0.21,
+                                               (as.integer(r1$`fertilizer_p1/npk_amount_p1`[2:length(r1$`fertilizer_p1/npk_amount_p1`)]) * 0.2) * 0.436,
+                                               (as.integer(r1$`fertilizer_p1/soymix_amount_p1`[2:length(r1$`fertilizer_p1/soymix_amount_p1`)]) * 0.2) * 0.436,
+                                               as.integer(r1$`fertilizer_p1/compoundD_amount_p1`[2:length(r1$`fertilizer_p1/compoundD_amount_p1`)]) * 0.2,
+                                               as.integer(r1$`fertilizer_p1/superD_amount_p1`[2:length(r1$`fertilizer_p1/superD_amount_p1`)]) * 0.21)),
+                              na.rm = TRUE),
+    K_fertilizer_p1 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p1/mop_amount_p1`[2:length(r1$`fertilizer_p1/mop_amount_p1`)]) * 0.498,
+                                               (as.integer(r1$`fertilizer_p1/npk_amount_p1`[2:length(r1$`fertilizer_p1/npk_amount_p1`)]) * 0.1) * 0.8,
+                                               (as.integer(r1$`fertilizer_p1/soymix_amount_p1`[2:length(r1$`fertilizer_p1/soymix_amount_p1`)]) * 0.13) * 0.8,
+                                               as.integer(r1$`fertilizer_p1/compoundD_amount_p1`[2:length(r1$`fertilizer_p1/compoundD_amount_p1`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p1/superD_amount_p1`[2:length(r1$`fertilizer_p1/superD_amount_p1`)]) * 0.07)),
+                              na.rm = TRUE),
+    fertilizer_price_p1 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p1/urea_amount_p1`[2:length(r1$`fertilizer_p1/urea_amount_p1`)]) * as.integer(r1$`fertilizer_price/urea_price`[2:length(r1$`fertilizer_price/urea_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/tsp_amount_p1`[2:length(r1$`fertilizer_p1/tsp_amount_p1`)]) * as.integer(r1$`fertilizer_price/tsp_price`[2:length(r1$`fertilizer_price/tsp_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/dap_amount_p1`[2:length(r1$`fertilizer_p1/dap_amount_p1`)]) * as.integer(r1$`fertilizer_price/dap_price`[2:length(r1$`fertilizer_price/dap_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/mop_amount_p1`[2:length(r1$`fertilizer_p1/mop_amount_p1`)]) * as.integer(r1$`fertilizer_price/mop_price`[2:length(r1$`fertilizer_price/mop_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/npk_amount_p1`[2:length(r1$`fertilizer_p1/npk_amount_p1`)]) * as.integer(r1$`fertilizer_price/npk_price`[2:length(r1$`fertilizer_price/npk_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/compoundD_amount_p1`[2:length(r1$`fertilizer_p1/compoundD_amount_p1`)]) * as.integer(r1$`fertilizer_price/compoundD_price`[2:length(r1$`fertilizer_price/compoundD_price`)]),
+                                                   as.integer(r1$`fertilizer_p1/superD_amount_p1`[2:length(r1$`fertilizer_p1/superD_amount_p1`)]) * as.integer(r1$`fertilizer_price/superD_price`[2:length(r1$`fertilizer_price/superD_price`)]))),
+                                  na.rm = TRUE),
+    treatment_p2 = "Standardized Farmer Practices",
+    plot_length_p2 = as.numeric(r1$`layout_p2/plot_lenght_m_p2`[2:length(r1$`layout_p2/plot_lenght_m_p2`)]),
+    plot_width_p2 = as.numeric(r1$`layout_p2/plot_width_m_p2`[2:length(r1$`layout_p2/plot_width_m_p2`)]),
+    plot_area_p2 = as.numeric(r1$`layout_p2/plot_area_p2`[2:length(r1$`layout_p2/plot_area_p2`)]),
+    crop_p2 = r1$`planting_p2/crop_cultivated_p2`[2:length(r1$`planting_p2/crop_cultivated_p2`)],
+    variety_p2 = r1$`planting_p2/variety_p2`[2:length(r1$`planting_p2/variety_p2`)],
+    planting_date_p2 = as.character(as.Date(as.integer(r1$`planting_p2/planting_date_p2`[2:length(r1$`planting_p2/planting_date_p2`)]), origin = "1900-01-01")),
+    seed_density_p2 = as.numeric(r1$`planting_p2/planting_population_p2`[2:length(r1$`planting_p2/planting_population_p2`)]),
+    planting_method_p2 = r1$`planting_p2/planting_technique_p2`[2:length(r1$`planting_p2/planting_technique_p2`)],
+    intercrop_p2 = ifelse(sub(" .*", "", r1$`planting_p2/intercrop_p2`[2:length(r1$`planting_p2/intercrop_p2`)]) == "other", NA, sub(" .*", "", r1$`planting_p2/intercrop_p2`[2:length(r1$`planting_p2/intercrop_p2`)])),
+    row_spacing_p2 = as.integer(r1$`planting_p2/row_spacing_p2`[2:length(r1$`planting_p2/row_spacing_p2`)]),
+    plant_spacing_p2 = as.integer(r1$`planting_p2/plant_spacing_p2`[2:length(r1$`planting_p2/plant_spacing_p2`)]),
     
-    # EGB:
-    # # There's no yield data (!?)
-    )
-  d1p1 <- d1p1[d1p1$event == "event1", colnames(d1p1)[colnames(d1p1) != "event"]]
-  # Add yield components
-  d2p1 <- data.frame(
-    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
-    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Actual farmer practices",
-                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "standardized farmer practices", "MVP")),
-    plot_length = as.numeric(r2[[373]][2:length(r2[[373]])]),
-    plot_width = as.numeric(r2[[374]][2:length(r2[[374]])]),
-    plot_area = as.numeric(r2[[375]][2:length(r2[[375]])]),
-    harvest_date = as.character(as.Date(as.integer(r2[[524]][2:length(r2[[524]])]), origin = "1900-01-01")),
-    fwy_residue = (as.numeric(r2[[527]][2:length(r2[[527]])]) / as.numeric(r2[[375]][2:length(r2[[375]])])) * 10000,
-    fw_yield = (as.numeric(r2[[528]][2:length(r2[[528]])]) / as.numeric(r2[[375]][2:length(r2[[375]])])) * 10000,
-    crop_price = as.numeric(r2[[533]][2:length(r2[[533]])])
+    fertilizer_type_p2 = gsub("other", "unknown", gsub(" ", ";", r1$`fertilizer_p2/fertilizer_name_p2`[2:length(r1$`fertilizer_p2/fertilizer_name_p2`)])),
+    fertilizer_date_p2 = as.character(as.Date(as.integer(r1$`fertilizer_p2/fertilizer_date_p2`[2:length(r1$`fertilizer_p2/fertilizer_date_p2`)]), origin = "1900-01-01")),
+    fertilizer_amount_p2 = rowSums(data.frame(lapply(r1[2:nrow(r1), c("fertilizer_p2/urea_amount_p2", "fertilizer_p2/tsp_amount_p2",
+                                                                      "fertilizer_p2/dap_amount_p2", "fertilizer_p2/mop_amount_p2",
+                                                                      "fertilizer_p2/npk_amount_p2", "fertilizer_p2/soymix_amount_p2",
+                                                                      "fertilizer_p2/compoundD_amount_p2", "fertilizer_p2/superD_amount_p2")],
+                                                     function(x) as.numeric(as.character(x)))),
+                                   na.rm = TRUE),
+    N_fertilizer_p2 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p2/urea_amount_p2`[2:length(r1$`fertilizer_p2/urea_amount_p2`)]) * 0.46,
+                                               as.integer(r1$`fertilizer_p2/dap_amount_p2`[2:length(r1$`fertilizer_p2/dap_amount_p2`)]) * 0.18,
+                                               as.integer(r1$`fertilizer_p2/npk_amount_p2`[2:length(r1$`fertilizer_p2/npk_amount_p2`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p2/soymix_amount_p2`[2:length(r1$`fertilizer_p2/soymix_amount_p2`)]) * 0.07,
+                                               as.integer(r1$`fertilizer_p2/compoundD_amount_p2`[2:length(r1$`fertilizer_p2/compoundD_amount_p2`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p2/superD_amount_p2`[2:length(r1$`fertilizer_p2/superD_amount_p2`)]) * 0.08)),
+                              na.rm = TRUE),
+    P_fertilizer_p2 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p2/tsp_amount_p2`[2:length(r1$`fertilizer_p2/tsp_amount_p2`)]) * 0.19,
+                                               as.integer(r1$`fertilizer_p2/dap_amount_p2`[2:length(r1$`fertilizer_p2/dap_amount_p2`)]) * 0.21,
+                                               (as.integer(r1$`fertilizer_p2/npk_amount_p2`[2:length(r1$`fertilizer_p2/npk_amount_p2`)]) * 0.2) * 0.436,
+                                               (as.integer(r1$`fertilizer_p2/soymix_amount_p2`[2:length(r1$`fertilizer_p2/soymix_amount_p2`)]) * 0.2) * 0.436,
+                                               as.integer(r1$`fertilizer_p2/compoundD_amount_p2`[2:length(r1$`fertilizer_p2/compoundD_amount_p2`)]) * 0.2,
+                                               as.integer(r1$`fertilizer_p2/superD_amount_p2`[2:length(r1$`fertilizer_p2/superD_amount_p2`)]) * 0.21)),
+                              na.rm = TRUE),
+    K_fertilizer_p2 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p2/mop_amount_p2`[2:length(r1$`fertilizer_p2/mop_amount_p2`)]) * 0.498,
+                                               (as.integer(r1$`fertilizer_p2/npk_amount_p2`[2:length(r1$`fertilizer_p2/npk_amount_p2`)]) * 0.1) * 0.8,
+                                               (as.integer(r1$`fertilizer_p2/soymix_amount_p2`[2:length(r1$`fertilizer_p2/soymix_amount_p2`)]) * 0.13) * 0.8,
+                                               as.integer(r1$`fertilizer_p2/compoundD_amount_p2`[2:length(r1$`fertilizer_p2/compoundD_amount_p2`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p2/superD_amount_p2`[2:length(r1$`fertilizer_p2/superD_amount_p2`)]) * 0.07)),
+                              na.rm = TRUE),
+    fertilizer_price_p2 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p2/urea_amount_p2`[2:length(r1$`fertilizer_p2/urea_amount_p2`)]) * as.integer(r1$`fertilizer_price/urea_price`[2:length(r1$`fertilizer_price/urea_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/tsp_amount_p2`[2:length(r1$`fertilizer_p2/tsp_amount_p2`)]) * as.integer(r1$`fertilizer_price/tsp_price`[2:length(r1$`fertilizer_price/tsp_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/dap_amount_p2`[2:length(r1$`fertilizer_p2/dap_amount_p2`)]) * as.integer(r1$`fertilizer_price/dap_price`[2:length(r1$`fertilizer_price/dap_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/mop_amount_p2`[2:length(r1$`fertilizer_p2/mop_amount_p2`)]) * as.integer(r1$`fertilizer_price/mop_price`[2:length(r1$`fertilizer_price/mop_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/npk_amount_p2`[2:length(r1$`fertilizer_p2/npk_amount_p2`)]) * as.integer(r1$`fertilizer_price/npk_price`[2:length(r1$`fertilizer_price/npk_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/compoundD_amount_p2`[2:length(r1$`fertilizer_p2/compoundD_amount_p2`)]) * as.integer(r1$`fertilizer_price/compoundD_price`[2:length(r1$`fertilizer_price/compoundD_price`)]),
+                                                   as.integer(r1$`fertilizer_p2/superD_amount_p2`[2:length(r1$`fertilizer_p2/superD_amount_p2`)]) * as.integer(r1$`fertilizer_price/superD_price`[2:length(r1$`fertilizer_price/superD_price`)]))),
+                                  na.rm = TRUE),
+    treatment_p3 = "MVP",
+    plot_length_p3 = as.numeric(r1$`layout_p3/plot_lenght_m_p3`[2:length(r1$`layout_p3/plot_lenght_m_p3`)]),
+    plot_width_p3 = as.numeric(r1$`layout_p3/plot_width_m_p3`[2:length(r1$`layout_p3/plot_width_m_p3`)]),
+    plot_area_p3 = as.numeric(r1$`layout_p3/plot_area_p3`[2:length(r1$`layout_p3/plot_area_p3`)]),
+    crop_p3 = r1$`planting_p3/crop_cultivated_p3`[2:length(r1$`planting_p3/crop_cultivated_p3`)],
+    variety_p3 = r1$`planting_p3/variety_p3`[2:length(r1$`planting_p3/variety_p3`)],
+    planting_date_p3 = as.character(as.Date(as.integer(r1$`planting_p3/planting_date_p3`[2:length(r1$`planting_p3/planting_date_p3`)]), origin = "1900-01-01")),
+    seed_density_p3 = as.numeric(r1$`planting_p3/planting_population_p3`[2:length(r1$`planting_p3/planting_population_p3`)]),
+    planting_method_p3 = r1$`planting_p3/planting_technique_p3`[2:length(r1$`planting_p3/planting_technique_p3`)],
+    intercrop_p3 = ifelse(sub(" .*", "", r1$`planting_p3/intercrop_p3`[2:length(r1$`planting_p3/intercrop_p3`)]) == "other", NA, sub(" .*", "", r1$`planting_p3/intercrop_p3`[2:length(r1$`planting_p3/intercrop_p3`)])),
+    row_spacing_p3 = as.integer(r1$`planting_p3/row_spacing_p3`[2:length(r1$`planting_p3/row_spacing_p3`)]),
+    plant_spacing_p3 = as.integer(r1$`planting_p3/plant_spacing_p3`[2:length(r1$`planting_p3/plant_spacing_p3`)]),
+    
+    fertilizer_type_p3 = gsub("other", "unknown", gsub(" ", ";", r1$`fertilizer_p3/fertilizer_name_p3`[2:length(r1$`fertilizer_p3/fertilizer_name_p3`)])),
+    fertilizer_date_p3 = as.character(as.Date(as.integer(r1$`fertilizer_p3/fertilizer_date_p3`[2:length(r1$`fertilizer_p3/fertilizer_date_p3`)]), origin = "1900-01-01")),
+    fertilizer_amount_p3 = rowSums(data.frame(lapply(r1[2:nrow(r1), c("fertilizer_p3/urea_amount_p3", "fertilizer_p3/tsp_amount_p3",
+                                                                      "fertilizer_p3/dap_amount_p3", "fertilizer_p3/mop_amount_p3",
+                                                                      "fertilizer_p3/npk_amount_p3", "fertilizer_p3/soymix_amount_p3",
+                                                                      "fertilizer_p3/compoundD_amount_p3", "fertilizer_p3/superD_amount_p3")],
+                                                     function(x) as.numeric(as.character(x)))),
+                                   na.rm = TRUE),
+    N_fertilizer_p3 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p3/urea_amount_p3`[2:length(r1$`fertilizer_p3/urea_amount_p3`)]) * 0.46,
+                                               as.integer(r1$`fertilizer_p3/dap_amount_p3`[2:length(r1$`fertilizer_p3/dap_amount_p3`)]) * 0.18,
+                                               as.integer(r1$`fertilizer_p3/npk_amount_p3`[2:length(r1$`fertilizer_p3/npk_amount_p3`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p3/soymix_amount_p3`[2:length(r1$`fertilizer_p3/soymix_amount_p3`)]) * 0.07,
+                                               as.integer(r1$`fertilizer_p3/compoundD_amount_p3`[2:length(r1$`fertilizer_p3/compoundD_amount_p3`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p3/superD_amount_p3`[2:length(r1$`fertilizer_p3/superD_amount_p3`)]) * 0.08)),
+                              na.rm = TRUE),
+    P_fertilizer_p3 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p3/tsp_amount_p3`[2:length(r1$`fertilizer_p3/tsp_amount_p3`)]) * 0.19,
+                                               as.integer(r1$`fertilizer_p3/dap_amount_p3`[2:length(r1$`fertilizer_p3/dap_amount_p3`)]) * 0.21,
+                                               (as.integer(r1$`fertilizer_p3/npk_amount_p3`[2:length(r1$`fertilizer_p3/npk_amount_p3`)]) * 0.2) * 0.436,
+                                               (as.integer(r1$`fertilizer_p3/soymix_amount_p3`[2:length(r1$`fertilizer_p3/soymix_amount_p3`)]) * 0.2) * 0.436,
+                                               as.integer(r1$`fertilizer_p3/compoundD_amount_p3`[2:length(r1$`fertilizer_p3/compoundD_amount_p3`)]) * 0.2,
+                                               as.integer(r1$`fertilizer_p3/superD_amount_p3`[2:length(r1$`fertilizer_p3/superD_amount_p3`)]) * 0.21)),
+                              na.rm = TRUE),
+    K_fertilizer_p3 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p3/mop_amount_p3`[2:length(r1$`fertilizer_p3/mop_amount_p3`)]) * 0.498,
+                                               (as.integer(r1$`fertilizer_p3/npk_amount_p3`[2:length(r1$`fertilizer_p3/npk_amount_p3`)]) * 0.1) * 0.8,
+                                               (as.integer(r1$`fertilizer_p3/soymix_amount_p3`[2:length(r1$`fertilizer_p3/soymix_amount_p3`)]) * 0.13) * 0.8,
+                                               as.integer(r1$`fertilizer_p3/compoundD_amount_p3`[2:length(r1$`fertilizer_p3/compoundD_amount_p3`)]) * 0.1,
+                                               as.integer(r1$`fertilizer_p3/superD_amount_p3`[2:length(r1$`fertilizer_p3/superD_amount_p3`)]) * 0.07)),
+                              na.rm = TRUE),
+    fertilizer_price_p3 = rowSums(data.frame(cbind(as.integer(r1$`fertilizer_p3/urea_amount_p3`[2:length(r1$`fertilizer_p3/urea_amount_p3`)]) * as.integer(r1$`fertilizer_price/urea_price`[2:length(r1$`fertilizer_price/urea_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/tsp_amount_p3`[2:length(r1$`fertilizer_p3/tsp_amount_p3`)]) * as.integer(r1$`fertilizer_price/tsp_price`[2:length(r1$`fertilizer_price/tsp_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/dap_amount_p3`[2:length(r1$`fertilizer_p3/dap_amount_p3`)]) * as.integer(r1$`fertilizer_price/dap_price`[2:length(r1$`fertilizer_price/dap_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/mop_amount_p3`[2:length(r1$`fertilizer_p3/mop_amount_p3`)]) * as.integer(r1$`fertilizer_price/mop_price`[2:length(r1$`fertilizer_price/mop_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/npk_amount_p3`[2:length(r1$`fertilizer_p3/npk_amount_p3`)]) * as.integer(r1$`fertilizer_price/npk_price`[2:length(r1$`fertilizer_price/npk_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/compoundD_amount_p3`[2:length(r1$`fertilizer_p3/compoundD_amount_p3`)]) * as.integer(r1$`fertilizer_price/compoundD_price`[2:length(r1$`fertilizer_price/compoundD_price`)]),
+                                                   as.integer(r1$`fertilizer_p3/superD_amount_p3`[2:length(r1$`fertilizer_p3/superD_amount_p3`)]) * as.integer(r1$`fertilizer_price/superD_price`[2:length(r1$`fertilizer_price/superD_price`)]))),
+                                  na.rm = TRUE)
   )
-  d2p1 <- d2p1[d2p1$treatment == "Actual farmer practices", ]
-  dp1 <- merge(d1p1, d2p1, "trial_id")
   
-  # Standardized farmers practices 
-  d1p2 <- data.frame(
-    trial_id = ifelse(is.na(r1[[7]][2:length(r1[[7]])]), r1[[8]][2:length(r1[[8]])], r1[[7]][2:length(r1[[7]])]),
-    event = r1[[9]][2:length(r1[[7]])],
-    crop = r1[[203]][2:length(r1[[203]])],
-    variety = r1[[239]][2:length(r1[[239]])],
-    planting_date = as.character(as.Date(as.integer(r1[[240]][2:length(r1[[240]])]), origin = "1900-01-01")),
-    # EGB:
-    # # Need to convert to plants/ha (How to convert seed/ha to plant/ha or kg/ha to plant/ha?)
-    seed_density = ifelse(r1[[242]][2:length(r1[[242]])] == "plants/m2",
-                          as.numeric(r1[[243]][2:length(r1[[243]])])*10000, NA),
-    planting_method = sub("_", " ", r1[[244]][2:length(r1[[244]])]),
-    intercrops = NA,
-    row_spacing = ifelse(as.numeric(r1[[284]][2:length(r1[[284]])]) >= 1, as.numeric(r1[[284]][2:length(r1[[284]])]), as.numeric(r1[[284]][2:length(r1[[284]])])*100),
-    plant_spacing = ifelse(as.numeric(r1[[285]][2:length(r1[[285]])])*100 > 100, as.numeric(r1[[285]][2:length(r1[[285]])]), as.numeric(r1[[285]][2:length(r1[[285]])])*100),
-    # plot_length = as.numeric(r1[[385]][2:length(r1[[385]])]),
-    # plot_width = as.numeric(r1[[386]][2:length(r1[[386]])]),
-    # plot_area = as.numeric(r1[[387]][2:length(r1[[387]])]),
-    fertilizer_used = ifelse(r1[[427]][2:length(r1[[427]])] != "none", FALSE, TRUE),
-    fertilizer_type = ifelse(r1[[427]][2:length(r1[[427]])] != "none", gsub("other", "unknown", gsub("compoundD", "D-compound	", sub(" .*", "", r1[[427]][2:length(r1[[427]])]))), NA),
-    fertilizer_date = as.character(as.Date(as.integer(r1[[440]][2:length(r1[[440]])]), origin = "1900-01-01")),
-    fertilizer_amount = rowSums(apply(as.matrix(r1[2:nrow(r1[441:448]), 441:448]), 2, as.numeric), na.rm = TRUE),
-    # SSP amount is missing
-    N_fertilizer = ifelse(is.na((as.numeric(r1[[447]][2:length(r1[[447]])]))), 0, as.numeric(r1[[447]][2:length(r1[[447]])])*0.1) + 
-      ifelse(is.na(as.numeric(r1[[448]][2:length(r1[[448]])])), 0, as.numeric(r1[[448]][2:length(r1[[448]])])*0.1),
-    P_fertilizer = ifelse(is.na((as.numeric(r1[[447]][2:length(r1[[447]])]))), 0, as.numeric(r1[[447]][2:length(r1[[447]])])*0.2) + 
-      ifelse(is.na(as.numeric(r1[[448]][2:length(r1[[448]])])), 0, as.numeric(r1[[448]][2:length(r1[[448]])])*0.2),
-    K_fertilizer = ifelse(is.na((as.numeric(r1[[447]][2:length(r1[[447]])]))), 0, as.numeric(r1[[447]][2:length(r1[[447]])])*0.1) + 
-      ifelse(is.na(as.numeric(r1[[448]][2:length(r1[[448]])])), 0, as.numeric(r1[[448]][2:length(r1[[448]])])*0.1)
-    
-    # fertilizer_price = (as.numeric(r1[[441]][2:length(r1[[441]])])/50)*as.numeric(r1[[471]][2:length(r1[[471]])]) +
-    #   (as.numeric(r1[[442]][2:length(r1[[442]])])/50)*as.numeric(r1[[472]][2:length(r1[[472]])]) +
-    #   (as.numeric(r1[[443]][2:length(r1[[443]])])/50)*as.numeric(r1[[473]][2:length(r1[[473]])]) +
-    #   (as.numeric(r1[[444]][2:length(r1[[444]])])/50)*as.numeric(r1[[474]][2:length(r1[[474]])]) +
-    #   (as.numeric(r1[[445]][2:length(r1[[445]])])/50)*as.numeric(r1[[475]][2:length(r1[[475]])]) +
-    #   (as.numeric(r1[[446]][2:length(r1[[446]])])/50)*as.numeric(r1[[476]][2:length(r1[[476]])]) +
-    #   (as.numeric(r1[[447]][2:length(r1[[447]])])/50)*as.numeric(r1[[477]][2:length(r1[[477]])]) +
-    #   (as.numeric(r1[[448]][2:length(r1[[448]])])/50)*as.numeric(r1[[478]][2:length(r1[[478]])]),
-    
-    # EGB:
-    # # There's no yield data (!?)
-  )
-  d1p2 <- d1p2[d1p2$event == "event1", colnames(d1p2)[colnames(d1p2) != "event"]]
-  # Add yield components
-  d2p2.size <- data.frame(
-    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
-    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Actual farmer practices",
-                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "standardized farmer practices", "MVP")),
-    plot_length = as.numeric(r2[[376]][2:length(r2[[376]])]),
-    plot_width = as.numeric(r2[[377]][2:length(r2[[377]])]),
-    plot_area = as.numeric(r2[[378]][2:length(r2[[378]])])
-  )
-  d2p2.size <- d2p2.size[d2p2.size$treatment == "Actual farmer practices", colnames(d2p2.size)[colnames(d2p2.size) != "treatment"]]
-  d2p2 <- data.frame(
-    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
-    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Actual farmer practices",
-                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "standardized farmer practices", "MVP")),
-    harvest_date = as.character(as.Date(as.integer(r2[[552]][2:length(r2[[552]])]), origin = "1900-01-01")),
-    fwy_residue = as.numeric(r2[[555]][2:length(r2[[555]])]),
-    fw_yield = as.numeric(r2[[556]][2:length(r2[[556]])]),
-    crop_price = as.numeric(r2[[561]][2:length(r2[[561]])])
-  )
-  d2p2 <- d2p2[d2p2$treatment == "standardized farmer practices", ]
-  d2p2 <- merge(d2p2, d2p2.size, "trial_id")
-  d2p2$fwy_residue <- (d2p2$fwy_residue / d2p2$plot_area) * 10000
-  d2p2$fw_yield <- (d2p2$fw_yield / d2p2$plot_area) * 10000
-  dp2 <- merge(d1p2, d2p2, "trial_id")
+  d2p <- reshape(d2p, 
+                 varying = list(
+                   paste0("treatment_p", 1:3), 
+                   paste0("plot_length_p", 1:3), 
+                   paste0("plot_width_p", 1:3), 
+                   paste0("plot_area_p", 1:3), 
+                   paste0("crop_p", 1:3), 
+                   paste0("variety_p", 1:3),
+                   paste0("intercrop_p", 1:3),
+                   paste0("planting_date_p", 1:3), 
+                   paste0("seed_density_p", 1:3), 
+                   paste0("planting_method_p", 1:3), 
+                   paste0("row_spacing_p", 1:3), 
+                   paste0("plant_spacing_p", 1:3), 
+                   paste0("fertilizer_type_p", 1:3), 
+                   paste0("fertilizer_date_p", 1:3), 
+                   paste0("fertilizer_amount_p", 1:3), 
+                   paste0("N_fertilizer_p", 1:3), 
+                   paste0("P_fertilizer_p", 1:3), 
+                   paste0("K_fertilizer_p", 1:3), 
+                   paste0("fertilizer_price_p", 1:3)
+                 ), 
+                 v.names = c("treatment", "plot_length", "plot_width", "plot_area", 
+                             "crop", "variety", "intercrop", "planting_date", "seed_density", 
+                             "planting_method", "row_spacing", "plant_spacing", 
+                             "fertilizer_type", "fertilizer_date", "fertilizer_amount", 
+                             "N_fertilizer", "P_fertilizer", "K_fertilizer", "fertilizer_price"), 
+                 timevar = "plot_name", 
+                 times = c("p1", "p2", "p3"), 
+                 direction = "long")
   
-  # MVP
-  d1p3 <- data.frame(
-    trial_id = ifelse(is.na(r1[[7]][2:length(r1[[7]])]), r1[[8]][2:length(r1[[8]])], r1[[7]][2:length(r1[[7]])]),
-    event = r1[[9]][2:length(r1[[7]])],
-    crop = r1[[286]][2:length(r1[[286]])],
-    variety = r1[[322]][2:length(r1[[322]])],
-    planting_date = as.character(as.Date(as.integer(r1[[323]][2:length(r1[[323]])]), origin = "1900-01-01")),
-    # EGB:
-    # # Need to convert to plants/ha (How to convert seed/ha to plant/ha or kg/ha to plant/ha?)
-    seed_density = ifelse(r1[[325]][2:length(r1[[325]])] == "plants/m2",
-                          as.numeric(r1[[326]][2:length(r1[[326]])])*10000, NA),
-    planting_method = sub("_", " ", r1[[327]][2:length(r1[[327]])]),
-    intercrops = NA,
-    row_spacing = ifelse(as.numeric(r1[[367]][2:length(r1[[367]])]) >= 1, as.numeric(r1[[367]][2:length(r1[[367]])]), as.numeric(r1[[367]][2:length(r1[[367]])])*100),
-    plant_spacing = ifelse(as.numeric(r1[[368]][2:length(r1[[368]])])*100 > 100, as.numeric(r1[[368]][2:length(r1[[368]])]), as.numeric(r1[[368]][2:length(r1[[368]])])*100),
-    # plot_length = as.numeric(r1[[388]][2:length(r1[[388]])]),
-    # plot_width = as.numeric(r1[[389]][2:length(r1[[389]])]),
-    # plot_area = as.numeric(r1[[390]][2:length(r1[[390]])]),
-    fertilizer_used = ifelse(r1[[449]][2:length(r1[[449]])] != "none", FALSE, TRUE),
-    fertilizer_type = ifelse(r1[[449]][2:length(r1[[449]])] != "none", gsub("other", "unknown", gsub("compoundD", "D-compound	", sub(" .*", "", r1[[449]][2:length(r1[[449]])]))), NA),
-    fertilizer_date = as.character(as.Date(as.integer(r1[[462]][2:length(r1[[462]])]), origin = "1900-01-01")),
-    fertilizer_amount = rowSums(apply(as.matrix(r1[2:nrow(r1[463:470]), 463:470]), 2, as.numeric), na.rm = TRUE),
-    N_fertilizer = ifelse(is.na((as.numeric(r1[[465]][2:length(r1[[465]])]))), 0, as.numeric(r1[[465]][2:length(r1[[465]])])*0.18) + 
-      ifelse(is.na(as.numeric(r1[[467]][2:length(r1[[467]])])), 0, as.numeric(r1[[467]][2:length(r1[[467]])])*0.1) +
-      ifelse(is.na(as.numeric(r1[[469]][2:length(r1[[469]])])), 0, as.numeric(r1[[469]][2:length(r1[[469]])])*0.1),
-    P_fertilizer = ifelse(is.na((as.numeric(r1[[465]][2:length(r1[[465]])]))), 0, as.numeric(r1[[465]][2:length(r1[[465]])])*0.2) + 
-      ifelse(is.na(as.numeric(r1[[467]][2:length(r1[[467]])])), 0, as.numeric(r1[[467]][2:length(r1[[467]])])*0.1) +
-      ifelse(is.na(as.numeric(r1[[469]][2:length(r1[[469]])])), 0, as.numeric(r1[[469]][2:length(r1[[469]])])*0.1),
-    K_fertilizer = ifelse(is.na(as.numeric(r1[[467]][2:length(r1[[467]])])), 0, as.numeric(r1[[467]][2:length(r1[[467]])])*0.1) +
-      ifelse(is.na(as.numeric(r1[[469]][2:length(r1[[469]])])), 0, as.numeric(r1[[469]][2:length(r1[[469]])])*0.1)
-    
-    # fertilizer_price = (as.numeric(r1[[441]][2:length(r1[[441]])])/50)*as.numeric(r1[[471]][2:length(r1[[471]])]) +
-    #   (as.numeric(r1[[442]][2:length(r1[[442]])])/50)*as.numeric(r1[[472]][2:length(r1[[472]])]) +
-    #   (as.numeric(r1[[443]][2:length(r1[[443]])])/50)*as.numeric(r1[[473]][2:length(r1[[473]])]) +
-    #   (as.numeric(r1[[444]][2:length(r1[[444]])])/50)*as.numeric(r1[[474]][2:length(r1[[474]])]) +
-    #   (as.numeric(r1[[445]][2:length(r1[[445]])])/50)*as.numeric(r1[[475]][2:length(r1[[475]])]) +
-    #   (as.numeric(r1[[446]][2:length(r1[[446]])])/50)*as.numeric(r1[[476]][2:length(r1[[476]])]) +
-    #   (as.numeric(r1[[447]][2:length(r1[[447]])])/50)*as.numeric(r1[[477]][2:length(r1[[477]])]) +
-    #   (as.numeric(r1[[448]][2:length(r1[[448]])])/50)*as.numeric(r1[[478]][2:length(r1[[478]])]),
-    
-    # EGB:
-    # # There's no yield data (!?)
-  )
-  d1p3 <- d1p3[d1p3$event == "event1", colnames(d1p3)[colnames(d1p3) != "event"]]
-  # Add yield components
-  d2p3.size <- data.frame(
-    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
-    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Actual farmer practices",
-                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "standardized farmer practices", "MVP")),
-    plot_length = as.numeric(r2[[379]][2:length(r2[[379]])]),
-    plot_width = as.numeric(r2[[380]][2:length(r2[[380]])]),
-    plot_area = as.numeric(r2[[381]][2:length(r2[[381]])])
-  )
-  d2p3.size <- d2p3.size[d2p3.size$treatment == "Actual farmer practices", colnames(d2p3.size)[colnames(d2p3.size) != "treatment"]]
-  d2p3 <- data.frame(
-    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
-    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Actual farmer practices",
-                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "standardized farmer practices", "MVP")),
-    harvest_date = as.character(as.Date(as.integer(r2[[562]][2:length(r2[[562]])]), origin = "1900-01-01")),
-    fwy_residue = as.numeric(r2[[565]][2:length(r2[[565]])]),
-    fw_yield = as.numeric(r2[[566]][2:length(r2[[566]])]),
-    crop_price = as.numeric(r2[[571]][2:length(r2[[571]])])
-  )
-  d2p3 <- d2p3[d2p3$treatment == "MVP", ]
-  d2p3 <- merge(d2p3, d2p3.size, "trial_id")
-  d2p3$fwy_residue <- (d2p3$fwy_residue / d2p3$plot_area) * 10000
-  d2p3$fw_yield <- (d2p3$fw_yield / d2p3$plot_area) * 10000
-  dp3 <- merge(d1p3, d2p3, "trial_id")
+  row.names(d2p) <- 1:nrow(d2p)
+  d2p$id <- NULL
+  d2p <- d2p[!duplicated(d2p),]
   
-  dp1 <- merge(d1, dp1, by = "trial_id")
-  dp2 <- merge(d1, dp2, by = "trial_id")
-  dp3 <- merge(d1, dp3, by = "trial_id")
+  d2 <- merge(d2, d2p, "trial_id")
   
-  d <- carobiner::bindr(dp1, dp2, dp3)
+  # # Filter for weeding (events 2 and 5)
+  # r12 <- r1[r1$`group/event` %in% c("event2", "event5"), ]
+  
+  d3p <- data.frame(
+    trial_id = ifelse(is.na(r2[[8]][2:length(r2[[8]])]), r2[[9]][2:length(r2[[9]])], r2[[8]][2:length(r2[[8]])]),
+    treatment = ifelse(r2[[3]][2:length(r2[[3]])] == "event8a", "Farmer Practices",
+                       ifelse(r2[[3]][2:length(r2[[3]])] == "event8b", "Standardized Farmer Practices", "MVP")),
+    harvest_date_p1A = as.character(as.Date(as.integer(r2$`harvest_1a/soy_harvest_date_1A`[2:length(r2$`harvest_1a/soy_harvest_date_1A`)]), origin = "1900-01-01")),
+    fwy_residue_p1A = as.numeric(r2$`harvest_1a/soy_fresh_biomass_g_1A`[2:length(r2$`harvest_1a/soy_fresh_biomass_g_1A`)]),
+    fw_yield_p1A = as.numeric(r2$`harvest_1a/soy_fresh_w_pod_g_1A`[2:length(r2$`harvest_1a/soy_fresh_w_pod_g_1A`)]),
+    crop_price_p1A = as.numeric(r2$`harvest_1a/soy_price`[2:length(r2$`harvest_1a/soy_price`)]),
+    harvest_date_p1B = as.character(as.Date(as.integer(r2$`harvest_1b/soy_harvest_date_1B`[2:length(r2$`harvest_1b/soy_harvest_date_1B`)]), origin = "1900-01-01")),
+    fwy_residue_p1B = as.numeric(r2$`harvest_1b/soy_fresh_biomass_g_1B`[2:length(r2$`harvest_1b/soy_fresh_biomass_g_1B`)]),
+    fw_yield_p1B = as.numeric(r2$`harvest_1b/soy_fresh_w_pod_g_1B`[2:length(r2$`harvest_1b/soy_fresh_w_pod_g_1B`)]),
+    crop_price_p1B = as.numeric(r2$`harvest_1a/soy_price`[2:length(r2$`harvest_1a/soy_price`)]),
+    harvest_date_p1C = as.character(as.Date(as.integer(r2$`harvest_1c/soy_harvest_date_1C`[2:length(r2$`harvest_1c/soy_harvest_date_1C`)]), origin = "1900-01-01")),
+    fwy_residue_p1C = as.numeric(r2$`harvest_1c/soy_fresh_biomass_g_1C`[2:length(r2$`harvest_1c/soy_fresh_biomass_g_1C`)]),
+    fw_yield_p1C = as.numeric(r2$`harvest_1c/soy_fresh_w_pod_g_1C`[2:length(r2$`harvest_1c/soy_fresh_w_pod_g_1C`)]),
+    crop_price_p1C = as.numeric(r2$`harvest_1a/soy_price`[2:length(r2$`harvest_1a/soy_price`)]),
+    harvest_date_p2 = as.character(as.Date(as.integer(r2$`harvest_2/soy_harvest_date_2`[2:length(r2$`harvest_2/soy_harvest_date_2`)]), origin = "1900-01-01")),
+    fwy_residue_p2 = as.numeric(r2$`harvest_2/soy_fresh_biomass_g_2`[2:length(r2$`harvest_2/soy_fresh_biomass_g_2`)]),
+    fw_yield_p2 = as.numeric(r2$`harvest_2/soy_fresh_biomass_g_2`[2:length(r2$`harvest_2/soy_fresh_biomass_g_2`)]),
+    crop_price_p2 = as.numeric(r2$`harvest_2/soy_price`[2:length(r2$`harvest_2/soy_price`)]),
+    harvest_date_p3 = as.character(as.Date(as.integer(r2$`harvest_3/soy_harvest_date_3`[2:length(r2$`harvest_3/soy_harvest_date_3`)]), origin = "1900-01-01")),
+    fwy_residue_p3 = as.numeric(r2$`harvest_3/soy_fresh_biomass_g_3`[2:length(r2$`harvest_3/soy_fresh_biomass_g_3`)]),
+    fw_yield_p3 = as.numeric(r2$`harvest_3/soy_fresh_biomass_g_3`[2:length(r2$`harvest_3/soy_fresh_biomass_g_3`)]),
+    crop_price_p3 = as.numeric(r2$`harvest_3/soy_price`[2:length(r2$`harvest_3/soy_price`)])
+  )
+  
+  d3p1 <- reshape(d3p[d3p$treatment %in% c("Farmer Practices"), c("trial_id", "treatment", colnames(d3p)[grepl(paste0(c("1A", "1B", "1C"), collapse = "|"), colnames(d3p))])], 
+                 varying = list(
+                   paste0("harvest_date_p", c("1A", "1B", "1C")),
+                   paste0("fwy_residue_p", c("1A", "1B", "1C")),
+                   paste0("fw_yield_p", c("1A", "1B", "1C")),
+                   paste0("crop_price_p", c("1A", "1B", "1C"))
+                 ), 
+                 v.names = c("harvest_date", "fwy_residue", "fw_yield", "crop_price"),
+                 timevar = "plot_name", 
+                 times = c("p1A", "p1B", "p1C"), 
+                 direction = "long")
+  d3p1$id <- NULL
+  row.names(d3p1) <- 1:nrow(d3p1)
+  d3p2 <- reshape(d3p[d3p$treatment %in% c("Standardized Farmer Practices"), c("trial_id", "treatment", colnames(d3p)[grepl(paste0(c("p2"), collapse = "|"), colnames(d3p))])], 
+                   varying = list(
+                     paste0("harvest_date_p", 2),
+                     paste0("fwy_residue_p", 2),
+                     paste0("fw_yield_p", 2),
+                     paste0("crop_price_p", 2)
+                   ), 
+                   v.names = c("harvest_date", "fwy_residue", "fw_yield", "crop_price"),
+                   timevar = "plot_name",
+                   times = c("p2"),
+                   direction = "long")
+  d3p2$id <- NULL
+  row.names(d3p2) <- 1:nrow(d3p2)
+  d3p3 <- reshape(d3p[d3p$treatment %in% c("MVP"), c("trial_id", "treatment", colnames(d3p)[grepl(paste0(c("p3"), collapse = "|"), colnames(d3p))])], 
+                   varying = list(
+                     paste0("harvest_date_p", 3),
+                     paste0("fwy_residue_p", 3),
+                     paste0("fw_yield_p", 3),
+                     paste0("crop_price_p", 3)
+                   ), 
+                   v.names = c("harvest_date", "fwy_residue", "fw_yield", "crop_price"),
+                   timevar = "plot_name",
+                   times = c("p3"),
+                   direction = "long")
+  d3p3$id <- NULL
+  row.names(d3p3) <- 1:nrow(d3p3)
+  
+  # EGB:
+  # # For plot 1 there is A, B and C. Are those replicates?
+  # # For plots 2 and 3, some trial_ids are duplicated, probably due to errors in the data entry. Perhaps they can be treated as replicates and aggregated (mean date and mean yields)?
 
-  # EGB: 
-  # # Not sure why, but there are duplicated entries... Keeping only the latests submissions
-  dd <- data.frame()
-  for (trid in unique(d$trial_id)) {
-    for (treat in unique(d$treatment)) {
-      subs <- d[d$trial_id == trid & d$treatment == treat,]
-      k <- subs[which.max(as.Date(subs$planting_date)),]
-      dd <- rbind(dd, k)
-    }
-  }
+  ################################################################################
   
-  carobiner::write_files(meta, dd, path=path)
+  # Start putting things together
+  d3p <- carobiner::bindr(d3p1, d3p2, d3p3)
+  d2 <- merge(d2[,colnames(d2)[!(colnames(d2) %in% c("plot_name"))]], d3p[,colnames(d3p)[!(colnames(d3p) %in% c("plot_name"))]], c("trial_id", "treatment"))
+  
+  # Standardize to units
+  d2$fw_yield <- ((d2$fw_yield * 1000)/d2$plot_area) * 10000
+  d2$fw_yield <- ((d2$fwy_residue * 1000)/d2$plot_area) * 10000
+  
+  # Merge with overall data
+  d <- merge(d1, d2, "trial_id")
+
+  carobiner::write_files(meta, d, path = path)
   
 }
