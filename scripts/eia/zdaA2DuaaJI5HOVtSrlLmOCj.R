@@ -199,10 +199,10 @@ carob_script <- function(path) {
    
    dw <- data.frame(
      trial_id = ifelse(is.na(r2$`intro/household_id`[2:length(r2$`intro/household_id`)]), r2$`intro/household_id`[2:length(r2$`intro/household_id`)], r2$`intro/household_id`[2:length(r2$`intro/household_id`)]),
-     weed_species = as.character(r2$`weeding/weed_type`),
-     weeding_done = ifelse(as.integer(r2$`weeding/weeding_number`) > 0, TRUE, FALSE),
-     weeding_times = as.integer(r2$`weeding/weeding_number`),
-     weeding_implement = ifelse(as.character(r2$`weeding/weeding_technique_1`) == "manual_weeding", "manual"),
+     weed_species = as.character(r2$`weeding/weed_type`[2:length(r2$`weeding/weed_type`)]),
+     weeding_done = ifelse(as.integer(r2$`weeding/weeding_number`[2:length(r2$`weeding/weeding_number`)]) > 0, TRUE, FALSE),
+     weeding_times = as.integer(r2$`weeding/weeding_number`[2:length(r2$`weeding/weeding_number`)]),
+     weeding_implement = ifelse(as.character(r2$`weeding/weeding_technique_1`[2:length(r2$`weeding/weeding_technique_1`)]) == "manual_weeding", "manual"),
      weeding_dates = gsub(" " , ";", trimws(gsub("NA", "",
                                                  paste(as.character(as.Date(as.integer(r2[[384]][2:length(r2[[384]])]), origin = "1900-01-01")),
                                                        as.character(as.Date(as.integer(r2[[386]][2:length(r2[[386]])]), origin = "1900-01-01")),
