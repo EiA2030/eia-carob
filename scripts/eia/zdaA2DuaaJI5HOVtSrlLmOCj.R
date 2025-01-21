@@ -4,8 +4,6 @@
 # 1. DOI missing
 # 2. Data reads are still unstable and user needs to have access
 # 3. License is missing (CC-BY)?
-# 4. Many valuable variables that need to be integrated still...
-# 5. ...
 
 carob_script <- function(path) {
    
@@ -20,22 +18,22 @@ carob_script <- function(path) {
    meta <- data.frame(
       uri = uri,
       dataset_id = uri,
-      publication= NA,
-      authors ="Kalpana Sharma; Elly Otieno; Kristin Peterson",
-      data_institute ="CIP",
+      publication = NA,
+      authors = "Kalpana Sharma; Elly Otieno; Kristin Peterson",
+      data_institute = "CIP",
       title = NA,
       group = group,
       license = 'none',
       carob_contributor = "Eduardo Garcia Bendito",
-      usecase_code= "USC013",
+      usecase_code = "USC013",
       usecase_name = 'NG-Akilimo-MC Sprout',
       activity = 'validation',
-      treatment_vars= "none",
-      response_vars= "none",
+      treatment_vars = "none",
+      response_vars = "none",
       project = 'Excellence in Agronomy',
       data_type = "experiment",
-      carob_date="2025-01-13",
-      notes= NA
+      carob_date = "2025-01-13",
+      notes = NA
    )
    
    # Manually build path (this can be automated...)
@@ -45,8 +43,8 @@ carob_script <- function(path) {
    f1 <- ff[basename(ff) == "20241216131010_EiA_MercyCorpsSprout_Validation_raw_2024.xlsx"]
    
    # Read relevant file(s) and filter events
-   r1 <- readxl::read_excel(f1)
-   r1 <- r1[r1$`intro/event` == "event1", ]
+   r0 <- readxl::read_excel(f1)
+   r1 <- r0[r0$`intro/event` == "event1", ]
 
    # Process data overall
    d1 <- data.frame(
@@ -196,50 +194,64 @@ carob_script <- function(path) {
        (as.integer(r1$`fertilizer_1/npk_amount_p6`[2:length(r1$`fertilizer_1/npk_amount_p6`)]) / 50) * as.integer(r1$`fertilizer_price/npk_price`[2:length(r1$`fertilizer_price/npk_price`)])
    )
    
+   # Process weeding data
+   r2 <- r0[r0$`intro/event` %in% c("event2", "event4", "event5", "event6", "event7"), ]
+   
+   dw <- data.frame(
+     trial_id = ifelse(is.na(r2$`intro/household_id`[2:length(r2$`intro/household_id`)]), r2$`intro/household_id`[2:length(r2$`intro/household_id`)], r2$`intro/household_id`[2:length(r2$`intro/household_id`)]),
+     weed_species = as.character(r2$`weeding/weed_type`[2:length(r2$`weeding/weed_type`)]),
+     weeding_done = ifelse(as.integer(r2$`weeding/weeding_number`[2:length(r2$`weeding/weeding_number`)]) > 0, TRUE, FALSE),
+     weeding_times = as.integer(r2$`weeding/weeding_number`[2:length(r2$`weeding/weeding_number`)]),
+     weeding_implement = ifelse(as.character(r2$`weeding/weeding_technique_1`[2:length(r2$`weeding/weeding_technique_1`)]) == "manual_weeding", "manual"),
+     weeding_dates = gsub(" " , ";", trimws(gsub("NA", "",
+                                                 paste(as.character(as.Date(as.integer(r2[[384]][2:length(r2[[384]])]), origin = "1900-01-01")),
+                                                       as.character(as.Date(as.integer(r2[[386]][2:length(r2[[386]])]), origin = "1900-01-01")),
+                                                       as.character(as.Date(as.integer(r2[[388]][2:length(r2[[388]])]), origin = "1900-01-01"))))))
+   )
+   
    # Process harvest data
-   r1 <- readxl::read_excel(f1)
-   r1 <- r1[r1$`intro/event` == "event7", ]
+   r3 <- r0[r0$`intro/event` == "event7", ]
    
    d3p1 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p1`[2:length(r1$`harvest_section/fresh_weight_p1`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p1`[2:length(r3$`harvest_section/fresh_weight_p1`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    d3p2 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p2`[2:length(r1$`harvest_section/fresh_weight_p2`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p2`[2:length(r3$`harvest_section/fresh_weight_p2`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    d3p3 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p3`[2:length(r1$`harvest_section/fresh_weight_p3`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p3`[2:length(r3$`harvest_section/fresh_weight_p3`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    d3p4 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p4`[2:length(r1$`harvest_section/fresh_weight_p4`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p4`[2:length(r3$`harvest_section/fresh_weight_p4`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    d3p5 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p5`[2:length(r1$`harvest_section/fresh_weight_p5`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p5`[2:length(r3$`harvest_section/fresh_weight_p5`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    d3p6 <- data.frame(
-     trial_id = ifelse(is.na(r1[[5]][2:length(r1[[5]])]), r1[[6]][2:length(r1[[6]])], r1[[5]][2:length(r1[[5]])]),
-     harvest_date = as.character(as.Date(as.integer(r1$`harvest_section/harvest_date`[2:length(r1$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
-     fw_yield = as.numeric(r1$`harvest_section/fresh_weight_p6`[2:length(r1$`harvest_section/fresh_weight_p6`)]),
-     crop_price = as.integer(r1$`harvest_section/product_price`[2:length(r1$`harvest_section/product_price`)]) / 1000
+     trial_id = ifelse(is.na(r3[[5]][2:length(r3[[5]])]), r3[[6]][2:length(r3[[6]])], r3[[5]][2:length(r3[[5]])]),
+     harvest_date = as.character(as.Date(as.integer(r3$`harvest_section/harvest_date`[2:length(r3$`harvest_section/harvest_date`)]), origin = "1900-01-01")),
+     fw_yield = as.numeric(r3$`harvest_section/fresh_weight_p6`[2:length(r3$`harvest_section/fresh_weight_p6`)]),
+     crop_price = as.integer(r3$`harvest_section/product_price`[2:length(r3$`harvest_section/product_price`)]) / 1000
    )
    
    # Merge d2 (management) & d3 (yield)
@@ -253,7 +265,7 @@ carob_script <- function(path) {
    dp <- carobiner::bindr(dp1, dp2, dp3, dp4, dp5, dp6)
    
    # Join with the general info
-   d <- merge(d1, dp, "trial_id")
+   d <- merge(merge(d1, dp, "trial_id"), dw, "trial_id")
    
    # Remove duplicates
    d <- d[!duplicated(d), ]
