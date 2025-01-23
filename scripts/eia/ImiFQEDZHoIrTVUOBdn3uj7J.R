@@ -325,6 +325,6 @@ carob_script <- function(path) {
   # Remove unused columns
   d <- d[,colnames(d)[!(colnames(d) %in% c("plot_name"))]]
   
-  carobiner::write_files(meta, dd, path=path)
+  carobiner::write_files(meta, d, path=path)
   
 }
