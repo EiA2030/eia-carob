@@ -276,6 +276,6 @@ carob_script <- function(path) {
    
    d$currency <- "NGN"
 
-   carobiner::write_files(meta, dd, path=path)
+   carobiner::write_files(meta, d, path=path)
    
 }
