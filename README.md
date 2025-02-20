@@ -25,7 +25,7 @@ For additional information on what is carob and how it is used, please visit [ht
 | NA | NG-Akilimo-SAA | USC008 | addon | Nigeria-SAA-AdOn |
 | NA | NG-Akilimo-SAA | USC008 | experiment | Nigeria-SAA-Experiment-PlantingDate |
 | [ZhlNGvfIy9DNUdaDXvQkTBMC](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/ZhlNGvfIy9DNUdaDXvQkTBMC.R) | NG-Akilimo-SAA | USC008 | validation | Nigeria-SAA-Validation |
-| NA | NG-Akilimo-MC Sprout | USC013 | addon | Nigeria-Sprout-AddOn |
+| [7U1xobHbcJa9sHwXMlqmt6xy](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/7U1xobHbcJa9sHwXMlqmt6xy.R) | NG-Akilimo-MC Sprout | USC013 | addon | Nigeria-Sprout-AddOn |
 | [YkRtc9XRGbxsZKbpN7SMbHc7](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/YkRtc9XRGbxsZKbpN7SMbHc7.R) | CA-HighMix-SNS/RAB | USC002 | addon | Rwanda-RAB-AddOn |
 | [S7C2vKKGuDfMbQmayY5BrAfC](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/S7C2vKKGuDfMbQmayY5BrAfC.R) | CA-HighMix-SNS/RAB | USC002 | other | Rwanda-RAB-Rice-partners |
 | [m1Q1vJBBuBPWhNQ3Zh2GITd1](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/m1Q1vJBBuBPWhNQ3Zh2GITd1.R) | CA-HighMix-SNS/RAB | USC002 | validation | Rwanda-RAB-Validation |
