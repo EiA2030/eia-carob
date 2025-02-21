@@ -35,3 +35,4 @@ For additional information on what is carob and how it is used, please visit [ht
 | [nQP55u8hzVTUSZPgrY9ZGwKd](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/nQP55u8hzVTUSZPgrY9ZGwKd.R) | CH-CerLeg-Solidaridad | USC016 | validation | Chinyanja-Solidaridad-Soy-Validation |
 | [zdaA2DuaaJI5HOVtSrlLmOCj](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/zdaA2DuaaJI5HOVtSrlLmOCj.R) | NG-Akilimo-MC Sprout | USC013 | validation | Nigeria-Sprout-Validation |
 | [ImiFQEDZHoIrTVUOBdn3uj7J](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/ImiFQEDZHoIrTVUOBdn3uj7J.R) | GH-CerLeg-Esoko | USC010 | validation | Ghana-Soybean-Validation |
+| [uGSZBoxcQvKaOxMuol29Zk2y](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/uGSZBoxcQvKaOxMuol29Zk2y.R) | WA-Rice-ATAFI/MOVE | USC001 | MELIA | Nigeria-ATAFI-MELIA |
