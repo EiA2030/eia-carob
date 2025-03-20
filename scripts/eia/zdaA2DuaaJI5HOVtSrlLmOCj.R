@@ -270,9 +270,17 @@ carob_script <- function(path) {
    # Remove duplicates
    d <- d[!duplicated(d), ]
    
+   # Fix yield
+   d$fw_yield <- (d$fw_yield/d$plot_area)*10000 # Convert from kg to kg/ha
+   d$fw_yield <- ifelse(d$fw_yield > 30000, 0, d$fw_yield) # Exclude wrong values
+   
+   # Fix crop price
    d$crop_price <- ifelse(d$crop_price < 1, d$crop_price * 1000,
                           ifelse(d$crop_price < 10, d$crop_price * 100,
                                  ifelse(d$crop_price < 100, d$crop_price * 10, d$crop_price)))
+   
+   # Fix fertilizer price
+   d$fertilizer_price <- ifelse(d$fertilizer_amount == 0, 0, d$fertilizer_price / d$fertilizer_amount)
    
    d$currency <- "NGN"
 
