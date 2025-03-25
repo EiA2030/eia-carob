@@ -22,7 +22,7 @@ carob_script <- function(path) {
     description ="Rwanda RAB Use Case Validations for potato and rice in 2022",
     license = NA,
     group = group,
-    publication= "hdl:10568/163020;hdl:10568/169261",
+    publication= "hdl:10568/163020",
     usecase_code = "USC002",
     usecase_name = "CA-HighMix-SNS/RAB",
     activity = 'validation',
