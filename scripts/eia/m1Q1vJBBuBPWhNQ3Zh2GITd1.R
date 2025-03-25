@@ -22,7 +22,7 @@ carob_script <- function(path) {
     description ="Rwanda RAB Use Case Validations for potato and rice in 2022",
     license = NA,
     group = group,
-    publication= "hdl:10568/163020",
+    publication= "hdl:10568/163020;hdl:10568/169261",
     usecase_code = "USC002",
     usecase_name = "CA-HighMix-SNS/RAB",
     activity = 'validation',
@@ -32,7 +32,7 @@ carob_script <- function(path) {
     carob_date="2024-09-27",
     treatment_vars = "N_fertilizer;P_fertilizer;K_fertilizer",
     response_vars= "yield_moisture",
-    notes = "land_prep_method might need review. seed_density units not standardized. Diseases, pest and stress not processed but available in the data"
+    notes = "Diseases, pest and stress not processed but available in the data"
   )
   
   # Manually build path (this can be automated...)
@@ -207,10 +207,11 @@ carob_script <- function(path) {
   dr2 <- unique(d2[!is.na(d2$harvest_date) & d2$crop == "rice" & !is.na(d2$fw_yield), c(7, 8, 13, 31:42)])
   dp <- merge(merge(dp, dp1, by = c("trial_id", "treatment", "crop"), all.x = TRUE), dp2, by = c("trial_id", "treatment", "crop"), all.y = TRUE)
   dr <- merge(merge(dr, dr1, by = c("trial_id", "treatment", "crop"), all.x = TRUE), dr2, by = c("trial_id", "treatment", "crop"), all.y = TRUE)
-  dr$fw_yield <- dr$fw_yield * 1000
-  dr$yield <- dr$fw_yield * (dr$yield_moisture/100)
   
   d4 <- carobiner::bindr(dp, dr)
+  
+  d4$fw_yield <- d4$fw_yield * 1000
+  d4$yield_marketable <- d4$yield_marketable * 1000
   
   d4$fertilizer_type <- NA
   d4$fertilizer_type[d4$crop == "potato" & d4$treatment == "BR"] <- "NPK"
