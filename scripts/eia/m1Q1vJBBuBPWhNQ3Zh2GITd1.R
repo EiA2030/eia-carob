@@ -22,7 +22,7 @@ carob_script <- function(path) {
     description ="Rwanda RAB Use Case Validations for potato and rice in 2022",
     license = NA,
     group = group,
-    publication=NA,
+    publication= "hdl:10568/163020",
     usecase_code = "USC002",
     usecase_name = "CA-HighMix-SNS/RAB",
     activity = 'validation',
@@ -55,6 +55,7 @@ carob_script <- function(path) {
     irrigated = ifelse(r$LandPreparation.landPreparation.irrigation_technique == "rainfed", FALSE, TRUE),
     on_farm = TRUE,
     is_survey = FALSE,
+    package = r$packageNr,
     crop = ifelse(tolower(r$crop) == "potatoirish", "potato", ifelse(tolower(r$crop) == "beansbush", "common bean", tolower(r$crop))),
     variety = ifelse(r$planting.plantingDetails.variety == "n/a", NA, r$planting.plantingDetails.variety),
     previous_crop = ifelse(r$LandPreparation.landPreparation.previous_crop == "n/a", NA,
@@ -198,35 +199,67 @@ carob_script <- function(path) {
   # Fix future dates error in weeding dates
   d2$weeding_dates <- gsub("2024", "2023", d2$weeding_dates)
   
-  # Synthesize to 1 row per trial/treatment/crop
+  dp <- unique(d2[!is.na(d2$previous_crop_burnt) & d2$crop == "potato", c(1:8, 13)])
+  dr <- unique(d2[!is.na(d2$previous_crop_burnt) & d2$crop == "rice", c(1:8, 13)])
+  dp1 <- unique(d2[!is.na(d2$previous_crop_burnt) & d2$crop == "potato", c(7:30)])
+  dr1 <- unique(d2[!is.na(d2$previous_crop_burnt) & d2$crop == "rice", c(7:30)])
+  dp2 <- unique(d2[!is.na(d2$harvest_date) & d2$crop == "potato" & !is.na(d2$fw_yield), c(7, 8, 13, 31:42)])
+  dr2 <- unique(d2[!is.na(d2$harvest_date) & d2$crop == "rice" & !is.na(d2$fw_yield), c(7, 8, 13, 31:42)])
+  dp <- merge(merge(dp, dp1, by = c("trial_id", "treatment", "crop"), all.x = TRUE), dp2, by = c("trial_id", "treatment", "crop"), all.y = TRUE)
+  dr <- merge(merge(dr, dr1, by = c("trial_id", "treatment", "crop"), all.x = TRUE), dr2, by = c("trial_id", "treatment", "crop"), all.y = TRUE)
+  dr$fw_yield <- dr$fw_yield * 1000
+  dr$yield <- dr$fw_yield * (dr$yield_moisture/100)
   
-  e1 <- d2[!is.na(d2$previous_crop_burnt), 1:30]
-  e2 <- d2[!is.na(d2$weeding_done), c(1:12, 31:33)]
-  e3 <- d2[!is.na(d2$fw_yield), c(7,8,12, 34:40)]
+  d4 <- carobiner::bindr(dp, dr)
   
-  wt <- aggregate(e2$weeding_times,
-                  by = list('trial_id' = e2$trial_id, 'treatment' = e2$treatment, 'crop' = e2$crop), FUN = sum, na.rm = T)
-  colnames(wt)[length(wt)] <- "weeding_times"
-  wd <- aggregate(e2$weeding_dates,
-                  by = list('trial_id' = e2$trial_id, 'treatment' = e2$treatment, 'crop' = e2$crop), FUN = paste, collapse = '; ')
-  colnames(wd)[length(wd)] <- "weeding_dates"
-  wm <- aggregate(e2$weeding_method,
-                  by = list('trial_id' = e2$trial_id, 'treatment' = e2$treatment, 'crop' = e2$crop), FUN = paste, collapse = '; ')
-  colnames(wm)[length(wm)] <- "weeding_method"
+  d4$fertilizer_type <- NA
+  d4$fertilizer_type[d4$crop == "potato" & d4$treatment == "BR"] <- "NPK"
+  d4$fertilizer_type[d4$crop == "potato" & d4$treatment == "AEZ"] <- "DAP;NPK;urea"
+  d4$fertilizer_type[d4$crop == "potato" & d4$treatment == "SSR"] <- "DAP;NPK;urea"
+  d4$fertilizer_amount <- NA
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "BR"] <- 300
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "AEZ"] <- 350
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 1] <- 345
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 2] <- 314
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 3] <- 436
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 4] <- 542
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 5] <- 425
+  d4$fertilizer_amount[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 6] <- 667
+  d4$N_fertilizer <- NA
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "BR"] <- 51
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "AEZ"] <- 104
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 1] <- 106
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 2] <- 95
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 3] <- 137
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 4] <- 144
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 5] <- 121
+  d4$N_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 6] <- 212
+  d4$P_fertilizer <- NA
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "BR"] <- 22
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "AEZ"] <- 28
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 1] <- 28
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 2] <- 22
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 3] <- 33
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 4] <- 44
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 5] <- 32
+  d4$P_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 6] <- 42
+  d4$K_fertilizer <- NA
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "BR"] <- 42
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "AEZ"] <- 14
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 1] <- 11
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 2] <- 14
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 3] <- 13
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 4] <- 33
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 5] <- 22
+  d4$K_fertilizer[d4$crop == "potato" & d4$treatment == "SSR" & d4$package == 6] <- 28
+  
+  d4$package <- NULL
+  d4$country <- "Rwanda"
+  
+  d4$crop_price <- d4$crop_price/1000
+  d4$crop_price[d4$crop == "potato"] <- 480
+  d4$fertilizer_price <- 675
 
-  d3 <- merge(e3, merge(wm, merge(wd, merge(wt, e1, by = c("trial_id", "treatment", "crop"), all.y = TRUE),
-                                  by = c("trial_id", "treatment", "crop"), all.y = TRUE),
-                        by = c("trial_id", "treatment", "crop"), all.y = TRUE),
-              by = c("trial_id", "treatment", "crop"), all.y = TRUE)
-  
-  d3$weeding_done <- ifelse(d3$weeding_times > 0, TRUE, FALSE)
-  
-  d4 <- d3[!with(d3, is.na(d3$harvest_date) & is.na(d3$crop_price) & is.na(d3$plot_area) & is.na(d3$yield_part) & is.na(d3$yield_marketable) & is.na(d3$fw_yield)),]
-  
-  d4$yield_marketable <- ifelse(d4$crop == "potato", as.numeric(d4$yield_marketable/(d4$plot_area/10000)), (d4$yield_marketable*(1-(d4$yield_moisture/100))/(d4$plot_area/10000)))
-  d4$fw_yield <- ifelse(d4$crop == "potato", as.numeric(d4$fw_yield/(d4$plot_area/10000)), (d4$fw_yield*(1-(d4$yield_moisture/100))/(d4$plot_area/10000)))
-  d4$yield <- d4$fw_yield
-  
   carobiner::write_files(meta, d4, path=path)
   
 }
