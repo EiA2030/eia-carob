@@ -325,6 +325,8 @@ carob_script <- function(path) {
   # Remove unused columns
   d <- d[,colnames(d)[!(colnames(d) %in% c("plot_name"))]]
   
+  d$fertilizer_price <- ifelse(d$fertilizer_amount == 0, 0, d$fertilizer_price/d$fertilizer_amount)
+  
   carobiner::write_files(meta, d, path=path)
   
 }
