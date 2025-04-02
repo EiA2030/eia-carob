@@ -54,6 +54,7 @@ carob_script <- function(path) {
    
    d1 <- r1[r1$usecase_name == "atafi",]
    d1$currency <- ifelse(d1$currency == "Nigerian Naira (NGN)", "NGN", d1$currency)
+   d1$gender <- ifelse(d1$gender == "M", "male", "female")
    d1$is_survey <- TRUE
    d1$on_farm <- FALSE
    d1$treatment <- ifelse(!is.na(d1$plot_area), "Implemented", "Not Implemented")
@@ -62,21 +63,24 @@ carob_script <- function(path) {
    d1$planting_date <- gsub("-.*", "\\1", ifelse(is.na(d1$planting_date_wet), d1$planting_date_dry, d1$planting_date_wet))
    d1$planting_date <- as.character(as.Date(paste0("2023-", substr(gsub("\\d","", d1$planting_date), 1, 3), "-", sprintf("%02d", as.integer(gsub("\\D","", d1$planting_date)))), "%Y-%b-%d"))
    d1$farming_system <- ifelse(is.na(d1$planting_date_dry), "Lowland", "Highland")
-   d1$area <- ifelse(d1$farmland_owned_units == "acre", as.numeric(d1$cropland_used) * 0.4047, as.numeric(d1$cropland_used))
+   d1$farmland_owned <- ifelse(d1$farmland_owned_units == "acre", as.numeric(d1$farmland_owned) * 0.4047, as.numeric(d1$farmland_owned))
+   d1$cropland_used <- ifelse(d1$farmland_owned_units == "acre", as.numeric(d1$cropland_used) * 0.4047, as.numeric(d1$cropland_used))
+   d1$plot_area <- ifelse(d1$farmland_owned_units == "acre", as.numeric(d1$plot_area) * 0.4047, as.numeric(d1$plot_area))
    d1$crop_weight <- ifelse(is.na(d1$last_yield), d1$future_yield, d1$last_yield) * d1$unit_kg
-   d1$yield <- d1$crop_weight / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$area)
+   d1$yield <- d1$crop_weight / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$cropland_used)
    d1$yield_part <- "grain"
    d1$fertilizer_used <- ifelse(d1$fertilizer_used == "yes", TRUE, FALSE)
    d1$fertilizer_type <- gsub("NPK; NPK", "NPK", gsub("npk", "NPK", sapply(sapply(sapply(strsplit(d1$fertilizer_type, " "), function(x) gsub(":.*","\\1",as.character(x))), tolower), paste0,collapse="; ")))
    d1$fertilizer_type[d1$fertilizer_type == "NA"] <- NA
+   d1$fertilizer_amount <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50) + ifelse(is.na(d1$urea_50kg_bags), 0, d1$urea_50kg_bags * 50))
    d1$fertilizer_dap <- gsub("-.*", "\\1", d1$fertilizer_dap)
    d1$N_splits <- sapply(strsplit(d1$N_splits, " "), length)
-   d1$N_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.2) + ifelse(is.na(d1$urea_50kg_bags), 0, d1$urea_50kg_bags * 50 * 0.46)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$area)
-   d1$P_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15 * 0.436) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.1 * 0.436)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$area)
-   d1$K_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15 * 0.83) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.1 * 0.83)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$area)
+   d1$N_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.2) + ifelse(is.na(d1$urea_50kg_bags), 0, d1$urea_50kg_bags * 50 * 0.46)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$cropland_used)
+   d1$P_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15 * 0.436) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.1 * 0.436)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$cropland_used)
+   d1$K_fertilizer <- (ifelse(is.na(d1$NPK151515_50kg_bags), 0, d1$NPK151515_50kg_bags * 50 * 0.15 * 0.83) + ifelse(is.na(d1$NPK201010_50kg_bags), 0, d1$NPK201010_50kg_bags * 50 * 0.1 * 0.83)) / ifelse(!is.na(d1$plot_area), d1$plot_area, d1$cropland_used)
    d1$herbicide_used <- ifelse(d1$herbicide_used == "yes", TRUE, FALSE)
    d1$crop_price <- d1$crop_price / d1$unit_kg
-   
+
    # Questions:
    # 1. Assumption: NA records in "What is the area of the ${Crop} field (in ${unitArea}) in which the ${UseCase} recommendation was applied?" were considered reference; and the others as treatment
    # 2. Due to mixing future ("How many ${unitName}s of raw ${Crop} are expected to be harvested in your ${Crop} field?") and past ("How many ${unitName}s of raw ${Crop} were harvested last time ${Crop} was grown in your field?")
@@ -84,11 +88,33 @@ carob_script <- function(path) {
    # 3. What is the correct area to use?
    
    d <- d1[,c("country", "adm1", "currency", "date", "gender", "usecase_name", "event_date", "is_survey", "on_farm", "location", "geo_from_source",
-              "farming_system", "farmland_owned", "area", "crop", "variety_type", "planting_date", "land_prep_method",
-              "treatment", "herbicide_used", "herbicide_implement", "fertilizer_used", "fertilizer_type", "fertilizer_dap", "N_splits",
-              "N_fertilizer", "P_fertilizer", "K_fertilizer", "yield", "yield_part", "proportion_sold", "crop_price")]
+              "farming_system", "farmland_owned", "cropland_used", "plot_area", "crop", "variety_type", "planting_date", "land_prep_method",
+              "treatment", "herbicide_used", "herbicide_implement", "fertilizer_used", "fertilizer_amount", "fertilizer_dap",
+              "fertilizer_type", "N_splits", "N_fertilizer", "P_fertilizer", "K_fertilizer",
+              "yield", "yield_part", "proportion_sold", "crop_price")]
    
-   d <- carobiner::change_names(d, from = "area", to = "plot_area")
+   d$land_prep_price <- 0
+   d$land_prep_price[!is.na(d$land_prep_method) & d$adm1 == "Kano"] <- 70700
+   d$land_prep_price[!is.na(d$land_prep_method) & d$adm1 == "Kebbi"] <- 69809
+   d$land_prep_price[!is.na(d$land_prep_method) & d$adm1 == "Nasarawa"] <- 52400
+   
+   d$planting_price <- 0
+   d$planting_price[d$adm1 == "Kano"] <- 34783
+   d$planting_price[d$adm1 == "Kebbi"] <- 35965
+   d$planting_price[d$adm1 == "Nasarawa"] <- 27948
+   
+   d$weeding_price <- 35000
+   d$weeding_price[d$herbicide_used == TRUE] <- 0
+   
+   d$fertilizer_price <- 0
+   d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Kano"] <- 136118
+   d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Kebbi"] <- 126207
+   d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Nasarawa"] <- 98068
+   
+   d$harvest_price <- 0
+   d$harvest_price[d$adm1 == "Kano"] <- 67434
+   d$harvest_price[d$adm1 == "Kebbi"] <- 67601
+   d$harvest_price[d$adm1 == "Nasarawa"] <- 60981
    
    # # For other use cases I need to change the relevant columns.
    # USC008 <- r[r$usecase_name == "sasakawa_ng",]
