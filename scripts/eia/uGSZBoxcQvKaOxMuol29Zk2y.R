@@ -93,6 +93,8 @@ carob_script <- function(path) {
               "fertilizer_type", "N_splits", "N_fertilizer", "P_fertilizer", "K_fertilizer",
               "yield", "yield_part", "proportion_sold", "crop_price")]
    
+   # EGB:
+   # # These are provided by Theresa (MELIA Lead) on an email on 2025-04-02
    d$land_prep_price <- 0
    d$land_prep_price[!is.na(d$land_prep_method) & d$adm1 == "Kano"] <- 70700
    d$land_prep_price[!is.na(d$land_prep_method) & d$adm1 == "Kebbi"] <- 69809
@@ -110,11 +112,16 @@ carob_script <- function(path) {
    d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Kano"] <- 136118
    d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Kebbi"] <- 126207
    d$fertilizer_price[d$fertilizer_used == TRUE & d$adm1 == "Nasarawa"] <- 98068
+   d$fertilizer_price <- ifelse(d$fertilizer_amount == 0, 0, d$fertilizer_price / d$fertilizer_amount)
    
    d$harvest_price <- 0
    d$harvest_price[d$adm1 == "Kano"] <- 67434
    d$harvest_price[d$adm1 == "Kebbi"] <- 67601
    d$harvest_price[d$adm1 == "Nasarawa"] <- 60981
+   
+   d$labour_price <- d$land_prep_price + d$planting_price + d$weeding_price + d$harvest_price
+   
+   d <- d[!is.na(d$yield),]
    
    # # For other use cases I need to change the relevant columns.
    # USC008 <- r[r$usecase_name == "sasakawa_ng",]
