@@ -17,6 +17,7 @@ For additional information on what is carob and how it is used, please visit [ht
 | [IzEfpts6gQgAGzZ4nNWRirn3](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/IzEfpts6gQgAGzZ4nNWRirn3.R) | ET-HighMix-NextGen | USC006 | validation | Ethiopia-DigitalGreen-Validation |
 | [dE9ZB3cP1aKPWR9Idw4Gp5cN](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/dE9ZB3cP1aKPWR9Idw4Gp5cN.R) | ET-HighMix-Gvt ETH | USC007 | addon | Ethiopia-Fertilizer-Addon |
 | [1DYRN4xC3vGwCpZTgCyCRNay](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/1DYRN4xC3vGwCpZTgCyCRNay.R) | ET-HighMix-Gvt ETH | USC007 | validation | Ethiopia-Fertilizer-Validation |
+| [Vag5MAhjeofxikO9s8ozT5YZ](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/Vag5MAhjeofxikO9s8ozT5YZ.R) | SA-RiceWheat-Bihar | USC011 | validation | SA-PlantingDate-Validation |
 | [R8EQa4bVPWLKYBuG7m9Bjsh0](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/R8EQa4bVPWLKYBuG7m9Bjsh0.R) | GH-CerLeg-GAIP | USC009 | addon | Ghana-GAIP-AddOn |
 | [doi_10.7910_DVN_F3VTAL](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/doi_10.7910_DVN_F3VTAL.R) | GH-CerLeg-GAIP | USC009 | other | NA |
 | [inzOQVrqT0rowUbaxaDsJFV2](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/inzOQVrqT0rowUbaxaDsJFV2.R) | GH-CerLeg-Esoko | USC010 | experiment | Ghana-Soybean-NOT |
