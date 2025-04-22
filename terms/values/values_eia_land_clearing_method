@@ -1,0 +1,7 @@
+"name","description","obo"
+burn,Vegetation is burned as a method of clearing the land,http://purl.obolibrary.org/obo/AGRO_00000530
+chemical,A chemical product is used to kill vegetation,http://purl.obolibrary.org/obo/AGRO_00002053
+slash_and_burn,Vegetation is cut down and burned as a method of clearing the land for cultivation,http://purl.obolibrary.org/obo/AGRO_00000525
+slash_and_grind,Vegetation is cut down, grinded and mulched on the cleared land,http://purl.obolibrary.org/obo/AGRO_00000528
+slash_and_remove,Vegetation is cut down and removed from the land,http://purl.obolibrary.org/obo/AGRO_00000526
+rock_crushing,Rocks are crushed to clear the land,http://purl.obolibrary.org/obo/AGRO_00000527
