@@ -18,6 +18,7 @@ carob_script <- function(path) {
     dataset_id = uri,
     authors = "Samar Ataher; Ajit Govind",
     data_institute = "ICARDA",
+    data_citation = "",
     title = NA,
     description ="Government of Egypt Use Case Validations for wheat in 2023-2024",
     license = NA,
@@ -30,7 +31,7 @@ carob_script <- function(path) {
     project = 'Excellence in Agronomy',
     data_type = "on-farm experiment",
     carob_date="2025-04-30",
-    treatment_vars = "soil_pH;soil_EC;previous_crop;seeding_rate;irrigation_method;irrigation_amount",
+    treatment_vars = "soil_pH;soil_EC;previous_crop;seed_density;irrigation_method;irrigation_amount",
     response_vars= "yield;gross_income",
     notes = ""
   )
@@ -47,15 +48,35 @@ carob_script <- function(path) {
   # EGB:
   # # The data is already carobized
   
-  d <- r[,3:ncol(r)]
+  d <- data.frame(r[,3:ncol(r)])
   
   d$dataset_id <- uri
+  d$trial_id <- as.character(match(d$longitude, unique(d$longitude)))
   d$geo_from_source <- TRUE
+  d$on_farm <- as.logical(d$on_farm)
+  d$is_survey <- FALSE
+  d$previous_crop <- tolower(d$previous_crop)
+  d$previous_crop[d$previous_crop == "cane"] <- "sugarcane"
+  d$previous_crop[d$previous_crop == "green beans"] <- "green bean"
+  d$previous_crop[d$previous_crop == "seasame"] <- "sesame"
+  d$previous_crop[d$previous_crop %in% c("soya bean", "soybeans")] <- "soybean"
+  d$previous_crop[d$previous_crop == "zucchini"] <- "squash"
   d$evapotranspiration <- d$Total_Eto
   d$irrigated <- TRUE
+  d$irrigation_method[d$irrigation_method == "Surface- flood"] <- "uncontrolled flooding"
+  d$irrigation_method[d$irrigation_method == "Surface-furrow"] <- "furrow"
+  d$irrigation_number <- as.integer(d$irrigation_number)
   d$N_fertilizer <- d$N_fertilizer_unit
   d$yield <- d$yield * 1000 # To kg/ha
-  d$N_fertilizer_unit <- d$Total_Eto <- NULL
+  d$soil_texture <- tolower(d$soil_texture)
+  d$soil_texture[d$soil_texture == "clay-loam"] <- "clay loam"
+  d$planting_date <- as.character(d$planting_date..)
+  d$harvest_date <- as.character(d$harvest_date)
+  d$seed_density <- d$seeding.rate
+  d$N_fertilizer_unit <- d$Total_Eto <- d$WP <- d$N_NUE <- d$seeding.rate <- d$Irrigation..energy._consumption <- d$gross.income <- d$planting_date.. <- NULL
+  # d$`Irrigation- energy _consumption` <- NULL
+  # d$`gross-income` <- NULL
+  # d$planting_date.. <- NULL
 
   carobiner::write_files(meta, d, path = path)
   
