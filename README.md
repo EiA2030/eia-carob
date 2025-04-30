@@ -38,3 +38,4 @@ For additional information on what is carob and how it is used, please visit [ht
 | [uGSZBoxcQvKaOxMuol29Zk2y](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/uGSZBoxcQvKaOxMuol29Zk2y.R) | WA-Rice-ATAFI/MOVE | USC001 | MELIA | Nigeria-ATAFI-MELIA |
 | [HbrVVS9fsFsdaSHOuGLnXUj6](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/HbrVVS9fsFsdaSHOuGLnXUj6.R) | EG-Irrigated-Gvt | USC004 | validation | Egypt-Government-Validation |
 | [Vag5MAhjeofxikO9s8ozT5YZ](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/Vag5MAhjeofxikO9s8ozT5YZ.R) | SA-RiceWheat-Bihar | USC011 | validation | SA-PlantingDate-Validation |
+| [owJxZcOXxHx77d2W6m60nEOp](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/owJxZcOXxHx77d2W6m60nEOp.R) | SEA-DSRC-Vietnam | USC018 | validation | Vietnam-DSRC-Validation |
