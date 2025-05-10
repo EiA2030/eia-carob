@@ -13,6 +13,12 @@ jobs:
       options: --user root  # needed to write to /home
 
     steps:
+    - name: Set up jovyan user
+      run: |
+        useradd -m -s /bin/bash jovyan
+        chown -R jovyan:jovyan /__w
+      shell: bash
+      
     - name: Install system dependencies
       run: |
         apt-get update && apt-get install -y \
@@ -62,4 +68,10 @@ jobs:
 
     - name: Run review of R scripts
       run: |
-        Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
+        su - jovyan bash -c '
+          echo "Running as user: $(whoami)"
+          echo "Home is: $HOME"
+          # Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
+          # Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
+        '
+        # Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
