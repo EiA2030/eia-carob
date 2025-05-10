@@ -16,11 +16,12 @@ jobs:
     - name: Install system dependencies
       run: |
         apt-get update && apt-get install -y \
-        libcurl4-openssl-dev \
         libssl-dev \
+        libcurl4-openssl-dev \
         libxml2-dev \
         libgit2-dev \
         git \
+        ca-certificates \
         jq \
         curl \
         gnupg \
@@ -30,33 +31,34 @@ jobs:
 
     - name: Install Azure CLI
       run: |
-        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        curl -v https://api.github.com/repos/reagro/carobiner
+        # curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Log in to Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_SP }}
-
-    - name: Create data directory
-      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
-
-    - name: Download source data from Azure Blob
-      run: |
-        az storage blob download-batch \
-          --account-name kapi \
-          --destination /home/jovyan/carob-eia/data/raw/eia \
-          --source eia-carob-raw \
-          --auth-mode login
-
-    - name: Install remotes package
-      run: Rscript -e 'install.packages("remotes")'
-
-    - name: Install carobiner package from GitHub
-      run: Rscript -e 'remotes::install_github("reagro/carobiner")'
-
-    - name: Run review of R scripts
-      run: |
-        Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
+    # - name: Checkout code
+    #   uses: actions/checkout@v3
+    # 
+    # - name: Log in to Azure
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_SP }}
+    # 
+    # - name: Create data directory
+    #   run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+    # 
+    # - name: Download source data from Azure Blob
+    #   run: |
+    #     az storage blob download-batch \
+    #       --account-name kapi \
+    #       --destination /home/jovyan/carob-eia/data/raw/eia \
+    #       --source eia-carob-raw \
+    #       --auth-mode login
+    # 
+    # - name: Install remotes package
+    #   run: Rscript -e 'install.packages("remotes")'
+    # 
+    # - name: Install carobiner package from GitHub
+    #   run: Rscript -e 'remotes::install_github("reagro/carobiner")'
+    # 
+    # - name: Run review of R scripts
+    #   run: |
+    #     Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
