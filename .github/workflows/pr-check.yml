@@ -62,5 +62,4 @@ jobs:
 
     - name: Run review of R scripts
       run: |
-        Rscript -e "path=getwd();cat(path)"
-        # Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
+        Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
