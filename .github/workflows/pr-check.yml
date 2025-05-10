@@ -17,8 +17,11 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_SP }}
 
-    - name: Create target directory
-      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+    - name: Create custom data directory
+      run: mkdir -p $GITHUB_WORKSPACE/carob-eia/data/raw/eia
+
+    - name: Create symlink to /home/jovyan
+      run: sudo ln -s $GITHUB_WORKSPACE/carob-eia/data/raw/eia /home/jovyan/carob-eia/data/raw/eia
   
     - name: Download source data from Azure Blob
       run: |
