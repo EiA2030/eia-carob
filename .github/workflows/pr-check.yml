@@ -71,7 +71,6 @@ jobs:
         su - jovyan bash -c '
           echo "Running as user: $(whoami)"
           echo "Home is: $HOME"
-          # Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
-          # Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
+          Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
+          Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
         '
-        # Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
