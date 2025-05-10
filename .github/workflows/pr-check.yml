@@ -17,12 +17,15 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_SP }}
 
+    - name: Create target directory
+      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+  
     - name: Download source data from Azure Blob
       run: |
         az storage blob download-batch \
-          --account-name <your_storage_account_name> \
-          --destination ./data \
-          --source <your_container_name> \
+          --account-name kapi \
+          --destination /home/jovyan/carob-eia/data/raw/eia \
+          --source eia-carob-raw \
           --auth-mode login
 
     - name: Set up R
