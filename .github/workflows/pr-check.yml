@@ -70,5 +70,7 @@ jobs:
       run: |
         su - jovyan bash -c '
           cd /__w/eia-carob/eia-carob
-          Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
+          Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
+          Rscript -e "path=getwd();cat(path)"
+          # Rscript -e "path=getwd();source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script(path)"
         '
