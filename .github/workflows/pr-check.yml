@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: rocker/r-base:latest
+      image: rocker/geospatial:latest
       options: --user root  # needed to write to /home
 
     steps:
