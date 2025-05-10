@@ -8,7 +8,29 @@ jobs:
   run-changed-r:
     runs-on: ubuntu-latest
 
+    container:
+      image: rocker/r-base:latest
+      options: --user root  # needed to write to /home
+
     steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update && apt-get install -y \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libxml2-dev \
+        libgit2-dev \
+        jq \
+        curl \
+        gnupg \
+        lsb-release \
+        apt-transport-https \
+        unzip
+
+    - name: Install Azure CLI
+      run: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
     - name: Checkout code
       uses: actions/checkout@v3
 
@@ -17,12 +39,9 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_SP }}
 
-    - name: Create custom data directory
-      run: mkdir -p $GITHUB_WORKSPACE/carob-eia/data/raw/eia
+    - name: Create data directory
+      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
 
-    - name: Create symlink to /home/jovyan
-      run: sudo ln -s $GITHUB_WORKSPACE/carob-eia/data/raw/eia /home/jovyan/carob-eia/data/raw/eia
-  
     - name: Download source data from Azure Blob
       run: |
         az storage blob download-batch \
@@ -31,26 +50,12 @@ jobs:
           --source eia-carob-raw \
           --auth-mode login
 
-    - name: Set up R
-      uses: r-lib/actions/setup-r@v2
-
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
 
     - name: Install carobiner package from GitHub
       run: Rscript -e 'remotes::install_github("reagro/carobiner", dependencies = TRUE, force = TRUE, upgrade = "never")'
 
-    # - name: Get changed R files
-    #   id: changed
-    #   run: |
-    #     CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
-    #     echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
-
     - name: Run review of R scripts
-      if: steps.changed.outputs.changed_files != ''
       run: |
         Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
-        # for file in ${{ steps.changed.outputs.changed_files }}; do
-        #   echo "Running $file"
-        #   Rscript -e "source('$file'); carob_script()"
-        # done
