@@ -68,10 +68,14 @@ jobs:
 
     - name: Run review of R scripts
       run: |
-        su - jovyan bash -c '
+        su - jovyan bash -c "
           cd /__w/eia-carob/eia-carob
-          # Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
-          # Rscript -e "path=getwd();cat(path)"
-          # Rscript -e "path=getwd(); files=list.files(path, recursive = T); cat(head(files))"
-          Rscript -e "path=getwd(); source(paste0(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R')); carob_script(path)"
-        '
+          Rscript -e \"path=getwd(); source(paste0(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R')); carob_script(path)\"
+        "
+        # su - jovyan bash -c '
+        #   cd /__w/eia-carob/eia-carob
+        #   # Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
+        #   # Rscript -e "path=getwd();cat(path)"
+        #   # Rscript -e "path=getwd(); files=list.files(path, recursive = T); cat(head(files))"
+        #   Rscript -e "path=getwd(); source(paste0(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R')); carob_script(path)"
+        # '
