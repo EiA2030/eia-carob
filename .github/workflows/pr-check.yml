@@ -1,0 +1,12 @@
+# .github/workflows/test.yml
+name: Minimal Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Hello world
+      run: echo "It works!"
