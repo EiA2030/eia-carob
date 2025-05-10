@@ -60,6 +60,6 @@ jobs:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       run: Rscript -e 'remotes::install_github("reagro/carobiner")'
 
-    # - name: Run review of R scripts
-    #   run: |
-    #     Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
+    - name: Run review of R scripts
+      run: |
+        Rscript -e "source('scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'); carob_script()"
