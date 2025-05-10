@@ -55,7 +55,7 @@ jobs:
       run: Rscript -e 'install.packages("remotes")'
 
     - name: Install carobiner package from GitHub
-      run: Rscript -e 'remotes::install_github("reagro/carobiner", dependencies = TRUE, force = TRUE, upgrade = "never")'
+      run: Rscript -e 'remotes::install_github("reagro/carobiner")'
 
     - name: Run review of R scripts
       run: |
