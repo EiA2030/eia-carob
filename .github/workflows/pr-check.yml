@@ -63,10 +63,10 @@ jobs:
     # - name: Install remotes package
     #   run: Rscript -e 'install.packages("remotes")'
 
-    - name: Install carobiner package from GitHub
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      run: Rscript -e 'remotes::install_github("reagro/carobiner")'
+    # - name: Install carobiner package from GitHub
+    #   env:
+    #     GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    #   run: Rscript -e 'remotes::install_github("reagro/carobiner")'
       
     # - name: Get changed R files
     #   id: changed
@@ -78,7 +78,7 @@ jobs:
     #   working-directory: ${{ github.workspace }}
 
     - name: Run review of R scripts
-      if: steps.changed.outputs.changed_files != ''
+      # if: steps.changed.outputs.changed_files != ''
       run: |
         cd /__w/eia-carob/eia-carob
         echo pwd
