@@ -90,15 +90,13 @@ jobs:
         git fetch origin
         CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
         echo "Changed files: $CHANGED_FILES"
-        # FILES="${{ steps.changed.outputs.changed_files }}"
-        # echo "Changed files: $FILES"
-        # for file in $FILES; do
-        #   echo "Running $file"
-        #   # su - jovyan bash -c '
-        #   #   cd /__w/eia-carob/eia-carob && \
-        #   #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
-        #   # '
-        # done
+        for file in $CHANGED_FILES; do
+          echo "Running $file"
+          # su - jovyan bash -c '
+          #   cd /__w/eia-carob/eia-carob && \
+          #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
+          # '
+        done
         # # su - jovyan bash -c "
         # #   cd /__w/eia-carob/eia-carob
         # #   Rscript -e \"
