@@ -21,81 +21,81 @@ jobs:
         chown -R jovyan:jovyan /__w
       shell: bash
       
-    - name: Install system dependencies
-      run: |
-        apt-get update && apt-get install -y \
-        libssl-dev \
-        libcurl4-openssl-dev \
-        libxml2-dev \
-        libgit2-dev \
-        git \
-        ca-certificates \
-        jq \
-        curl \
-        gnupg \
-        lsb-release \
-        apt-transport-https \
-        unzip
+    # - name: Install system dependencies
+    #   run: |
+    #     apt-get update && apt-get install -y \
+    #     libssl-dev \
+    #     libcurl4-openssl-dev \
+    #     libxml2-dev \
+    #     libgit2-dev \
+    #     git \
+    #     ca-certificates \
+    #     jq \
+    #     curl \
+    #     gnupg \
+    #     lsb-release \
+    #     apt-transport-https \
+    #     unzip
 
-    - name: Install Azure CLI
-      run: |
-        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+    # - name: Install Azure CLI
+    #   run: |
+    #     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
     - name: Checkout code
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Ensures full git history so git diff works
 
-    - name: Log in to Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_SP }}
+    # - name: Log in to Azure
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_SP }}
 
-    - name: Create data directory
-      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+    # - name: Create data directory
+    #   run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
 
-    - name: Download source data from Azure Blob
-      run: |
-        az storage blob download-batch \
-          --account-name kapi \
-          --destination /home/jovyan/carob-eia/data/raw/eia \
-          --source eia-carob-raw \
-          --auth-mode login
+    # - name: Download source data from Azure Blob
+    #   run: |
+    #     az storage blob download-batch \
+    #       --account-name kapi \
+    #       --destination /home/jovyan/carob-eia/data/raw/eia \
+    #       --source eia-carob-raw \
+    #       --auth-mode login
 
-    - name: Install remotes package
-      run: Rscript -e 'install.packages("remotes")'
+    # - name: Install remotes package
+    #   run: Rscript -e 'install.packages("remotes")'
 
     - name: Install carobiner package from GitHub
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       run: Rscript -e 'remotes::install_github("reagro/carobiner")'
       
-    - name: Get changed R files
-      id: changed
+    # - name: Get changed R files
+    #   id: changed
+    #   run: |
+    #     cd /__w/eia-carob/eia-carob
+    #     CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
+    #     echo "Changed files: $CHANGED_FILES"
+    #     echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+    #   working-directory: ${{ github.workspace }}
+
+    - name: Run review of R scripts
+      if: steps.changed.outputs.changed_files != ''
       run: |
         cd /__w/eia-carob/eia-carob
-        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
-        echo "Changed files: $CHANGED_FILES"
-        echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
-      working-directory: ${{ github.workspace }}
-
-    # - name: Run review of R scripts
-    #   if: steps.changed.outputs.changed_files != ''
-    #   run: |
-    #     FILES="${{ steps.changed.outputs.changed_files }}"
-    #     echo "Changed files: $FILES"
-    #     for file in $FILES; do
-    #       echo "Running $file"
-    #       # su - jovyan bash -c '
-    #       #   cd /__w/eia-carob/eia-carob && \
-    #       #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
-    #       # '
-    #     done
-    #     # su - jovyan bash -c "
-    #     #   cd /__w/eia-carob/eia-carob
-    #     #   Rscript -e \"
-    #     #     path <- getwd();
-    #     #     source(file.path(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'));
-    #     #     carob_script(path);
-    #     #   \"
-    #     # "
+        echo pwd
+        # FILES="${{ steps.changed.outputs.changed_files }}"
+        # echo "Changed files: $FILES"
+        # for file in $FILES; do
+        #   echo "Running $file"
+        #   # su - jovyan bash -c '
+        #   #   cd /__w/eia-carob/eia-carob && \
+        #   #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
+        #   # '
+        # done
+        # # su - jovyan bash -c "
+        # #   cd /__w/eia-carob/eia-carob
+        # #   Rscript -e \"
+        # #     path <- getwd();
+        # #     source(file.path(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'));
+        # #     carob_script(path);
+        # #   \"
+        # # "
