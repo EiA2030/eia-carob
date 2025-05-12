@@ -4,7 +4,8 @@ on:
   workflow_dispatch:  # allows manual triggering
   pull_request:
     branches:
-      - main
+      # - development
+      - ci-test
 
 jobs:
   run-changed-r:
@@ -21,73 +22,74 @@ jobs:
         chown -R jovyan:jovyan /__w
       shell: bash
       
-    # - name: Install system dependencies
-    #   run: |
-    #     apt-get update && apt-get install -y \
-    #     libssl-dev \
-    #     libcurl4-openssl-dev \
-    #     libxml2-dev \
-    #     libgit2-dev \
-    #     git \
-    #     ca-certificates \
-    #     jq \
-    #     curl \
-    #     gnupg \
-    #     lsb-release \
-    #     apt-transport-https \
-    #     unzip
+    - name: Install system dependencies
+      run: |
+        apt-get update && apt-get install -y \
+        libssl-dev \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        libgit2-dev \
+        git \
+        ca-certificates \
+        jq \
+        curl \
+        gnupg \
+        lsb-release \
+        apt-transport-https \
+        unzip
 
-    # - name: Install Azure CLI
-    #   run: |
-    #     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+    - name: Install Azure CLI
+      run: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
     - name: Checkout code
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    # - name: Log in to Azure
-    #   uses: azure/login@v1
-    #   with:
-    #     creds: ${{ secrets.AZURE_SP }}
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SP }}
 
-    # - name: Create data directory
-    #   run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+    - name: Create data directory
+      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
 
-    # - name: Download source data from Azure Blob
-    #   run: |
-    #     az storage blob download-batch \
-    #       --account-name kapi \
-    #       --destination /home/jovyan/carob-eia/data/raw/eia \
-    #       --source eia-carob-raw \
-    #       --auth-mode login
+    - name: Download source data from Azure Blob
+      run: |
+        az storage blob download-batch \
+          --account-name kapi \
+          --destination /home/jovyan/carob-eia/data/raw/eia \
+          --source eia-carob-raw \
+          --auth-mode login
 
-    # - name: Install remotes package
-    #   run: Rscript -e 'install.packages("remotes")'
+    - name: Install remotes package
+      run: Rscript -e 'install.packages("remotes")'
 
-    # - name: Install carobiner package from GitHub
-    #   env:
-    #     GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    #   run: Rscript -e 'remotes::install_github("reagro/carobiner")'
+    - name: Install carobiner package from GitHub
+      env:
+        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      run: Rscript -e 'remotes::install_github("reagro/carobiner")'
       
     # - name: Get changed R files
     #   id: changed
     #   run: |
     #     cd /__w/eia-carob/eia-carob
+    #     git config --global --add safe.directory /__w/eia-carob/eia-carob
+    #     git fetch origin
     #     CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
     #     echo "Changed files: $CHANGED_FILES"
     #     echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
     #   working-directory: ${{ github.workspace }}
 
-    - name: Run review of R scripts
+    - name: Get modified scripts and run review
       # if: steps.changed.outputs.changed_files != ''
       run: |
         cd /__w/eia-carob/eia-carob
         git config --global --add safe.directory /__w/eia-carob/eia-carob
         git fetch origin
-        git diff --name-only origin/main...HEAD
-        # CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
-        # echo "Changed files: $CHANGED_FILES"
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
+        echo "Changed files: $CHANGED_FILES"
         # FILES="${{ steps.changed.outputs.changed_files }}"
         # echo "Changed files: $FILES"
         # for file in $FILES; do
