@@ -81,7 +81,8 @@ jobs:
       # if: steps.changed.outputs.changed_files != ''
       run: |
         cd /__w/eia-carob/eia-carob
-        # git fetch origin
+        git config --global --add safe.directory /__w/eia-carob/eia-carob
+        git fetch origin
         git diff --name-only origin/main...HEAD
         # CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
         # echo "Changed files: $CHANGED_FILES"
