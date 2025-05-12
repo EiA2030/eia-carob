@@ -75,19 +75,17 @@ jobs:
         echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
     - name: Run review of R scripts
+      if: steps.changed.outputs.changed_files != ''
       run: |
-        su - jovyan bash -c "
-          cd /__w/eia-carob/eia-carob
-          for file in ${{ steps.changed.outputs.changed_files }}; do
-            echo "Running $file"
-            Rscript -e \"
-              path <- getwd();
-              source('$file');
-              # source(file.path(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'));
-              carob_script(path);
-            \"
-          done
-        "
+        FILES="${{ steps.changed.outputs.changed_files }}"
+        echo "Changed files: $FILES"
+        for file in $FILES; do
+          echo "Running $file"
+          # su - jovyan bash -c '
+          #   cd /__w/eia-carob/eia-carob && \
+          #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
+          # '
+        done
         # su - jovyan bash -c "
         #   cd /__w/eia-carob/eia-carob
         #   Rscript -e \"
