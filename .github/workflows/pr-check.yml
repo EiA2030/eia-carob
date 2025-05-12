@@ -3,6 +3,8 @@ name: Pull Request Check
 on:
   workflow_dispatch:  # allows manual triggering
   pull_request:
+    branches:
+      - main
 
 jobs:
   run-changed-r:
@@ -65,17 +67,32 @@ jobs:
       env:
         GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       run: Rscript -e 'remotes::install_github("reagro/carobiner")'
+      
+    - name: Get changed R files
+      id: changed
+      run: |
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
+        echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
     - name: Run review of R scripts
       run: |
         su - jovyan bash -c "
           cd /__w/eia-carob/eia-carob
-          Rscript -e \"path=getwd(); source(paste0(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R')); carob_script(path)\"
+          for file in ${{ steps.changed.outputs.changed_files }}; do
+            echo "Running $file"
+            Rscript -e \"
+              path <- getwd();
+              source('$file');
+              # source(file.path(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'));
+              carob_script(path);
+            \"
+          done
         "
-        # su - jovyan bash -c '
+        # su - jovyan bash -c "
         #   cd /__w/eia-carob/eia-carob
-        #   # Rscript -e "cat(normalizePath(\"~\"), \"\n\")"
-        #   # Rscript -e "path=getwd();cat(path)"
-        #   # Rscript -e "path=getwd(); files=list.files(path, recursive = T); cat(head(files))"
-        #   Rscript -e "path=getwd(); source(paste0(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R')); carob_script(path)"
-        # '
+        #   Rscript -e \"
+        #     path <- getwd();
+        #     source(file.path(path, '/scripts/eia/NT7VLWDrOQEkarWkfn2bDSuf.R'));
+        #     carob_script(path);
+        #   \"
+        # "
