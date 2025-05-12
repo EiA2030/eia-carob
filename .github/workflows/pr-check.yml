@@ -71,6 +71,7 @@ jobs:
     - name: Get changed R files
       id: changed
       run: |
+        cd /__w/eia-carob/eia-carob
         CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '\.R$' || true)
         echo "Changed files: $CHANGED_FILES"
         echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
