@@ -4,7 +4,8 @@ on:
   workflow_dispatch:  # allows manual triggering
   pull_request:
     branches:
-      - main
+      # - main
+      - development
 
 jobs:
   run-changed-r:
