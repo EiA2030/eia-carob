@@ -97,12 +97,7 @@ jobs:
           echo "Running changed file: $file" >> $LOGFILE
           su - jovyan bash -c '
             cd /__w/eia-carob/eia-carob && \
-            Rscript -e \"
-              path <- getwd();
-              source(\"'$file'\");
-              out <- capture.output(carob_script(path));
-              cat(out, sep = '\n');
-            \"
+            Rscript -e "path <- getwd(); source(\"'$file'\"); out <- capture.output(carob_script(path)); cat(out, sep = '\n')"
           ' >> $LOGFILE 2>&1
         done
         echo "REVIEW_LOG<<EOF" >> $GITHUB_OUTPUT
