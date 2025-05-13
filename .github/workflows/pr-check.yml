@@ -92,10 +92,10 @@ jobs:
         echo "Changed files: $CHANGED_FILES"
         for file in $CHANGED_FILES; do
           echo "Running $file"
-          # su - jovyan bash -c '
-          #   cd /__w/eia-carob/eia-carob && \
-          #   Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
-          # '
+          su - jovyan bash -c '
+            # cd /__w/eia-carob/eia-carob && \
+            Rscript -e "path <- getwd(); source(\"'$file'\"); carob_script(path);"
+          '
         done
         # # su - jovyan bash -c "
         # #   cd /__w/eia-carob/eia-carob
