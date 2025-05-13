@@ -91,7 +91,6 @@ jobs:
         git config --global --add safe.directory /__w/eia-carob/eia-carob
         git fetch origin
         CHANGED_FILES=$(git diff --name-only origin/development...HEAD | grep '\.R$' || true)
-        echo "Changed files: $CHANGED_FILES"
         for file in $CHANGED_FILES; do
           echo "Running changed file: $file"
           echo "Running changed file: $file" >> $LOGFILE
@@ -100,3 +99,17 @@ jobs:
         echo "REVIEW_LOG<<EOF" >> $GITHUB_OUTPUT
         cat $LOGFILE >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Add comments to PR
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `\`\`\`${{ steps.review.outputs.REVIEW_LOG }}\`\`\``;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "### 🧪 Review of R scripts:\n" + output
+          });
