@@ -1,0 +1,126 @@
+name: Pull Request Approved - Dev
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  post-merge:
+    runs-on: ubuntu-latest
+
+    container:
+      image: rocker/geospatial:latest
+      options: --user root  # needed to write to /home
+
+    steps:
+    - name: Set up jovyan user
+      run: |
+        useradd -m -s /bin/bash jovyan
+        chown -R jovyan:jovyan /__w
+      shell: bash
+      
+    - name: Install system dependencies
+      run: |
+        apt-get update && apt-get install -y \
+        libssl-dev \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        libgit2-dev \
+        git \
+        ca-certificates \
+        jq \
+        curl \
+        gnupg \
+        lsb-release \
+        apt-transport-https \
+        unzip
+
+    - name: Install Azure CLI
+      run: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_SP }}
+
+    - name: Create data directory
+      run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
+
+    - name: Download source data from Azure Blob
+      run: |
+        az storage blob download-batch \
+          --account-name kapi \
+          --destination /home/jovyan/carob-eia/data/raw/eia \
+          --source eia-carob-raw \
+          --auth-mode login
+
+    - name: Install remotes package
+      run: Rscript -e 'install.packages("remotes")'
+
+    - name: Install carobiner package from GitHub
+      env:
+        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      run: Rscript -e 'remotes::install_github("reagro/carobiner")'
+      
+    # - name: Get changed R files
+    #   id: changed
+    #   run: |
+    #     cd /__w/eia-carob/eia-carob
+    #     git config --global --add safe.directory /__w/eia-carob/eia-carob
+    #     git fetch origin
+    #     CHANGED_FILES=$(git diff --name-only origin/development...HEAD | grep '\.R$' || true)
+    #     echo "Changed files: $CHANGED_FILES"
+    #     echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+    #   working-directory: ${{ github.workspace }}
+
+    - name: Get modified scripts and run review
+      id: review
+      # if: steps.changed.outputs.changed_files != ''
+      run: |
+        LOGFILE=pr-review.txt
+        echo "" > $LOGFILE
+        cd /__w/eia-carob/eia-carob
+        git config --global --add safe.directory /__w/eia-carob/eia-carob
+        git fetch origin
+        CHANGED_FILES=$(git diff --name-only origin/development...HEAD | grep '\.R$' || true)
+        for file in $CHANGED_FILES; do
+          echo "Running changed file: $file \n"
+          echo $(basename "$file") >> $LOGFILE
+          su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript -e 'path <- getwd(); source(\"$file\"); carob_script(path)'"
+          az storage blob upload \
+            --account-name kapi \
+            --container-name dev-eia-carob-clean \
+            --name "$(basename "${file%.R}").csv" \
+            --file /__w/eia-carob/eia-carob/data/clean/eia/$(basename "${file%.R}").csv \
+            --overwrite --auth-mode login
+          az storage blob upload \
+            --account-name kapi \
+            --container-name dev-eia-carob-clean \
+            --name "$(basename "${file%.R}")_meta.csv" \
+            --file /__w/eia-carob/eia-carob/data/clean/eia/$(basename "${file%.R}")_meta.csv \
+            --overwrite --auth-mode login
+        done
+        echo "REVIEW_LOG<<EOF" >> $GITHUB_OUTPUT
+        cat $LOGFILE >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Add comments to PR
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `\`\`\`${{ steps.review.outputs.REVIEW_LOG }}\`\`\``;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "### ♻️ Dataset added: " + output + "\n*This message is generated automatically.\n"
+          });
