@@ -118,6 +118,6 @@ carob_script <- function(path) {
 #    
 #    carobiner::write_files(meta, d, path=path)
    
-   cat("Another test!")
+   cat("Yet another test!")
    
 }
