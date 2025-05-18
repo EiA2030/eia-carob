@@ -27,7 +27,7 @@ carob_script <- function(path) {
       carob_contributor = 'Cedric Ngakou',
       usecase_code= "USC018",
       usecase_name = 'SEA-DSRC-Vietnam',
-      activity = 'experiment',
+      activity = 'validtion',
       treatment_vars= "seed_rate; N_fertilizer; P_fertilizer; K_fertilizer",
       response_vars= "yield",
       project = 'Excellence in Agronomy',
