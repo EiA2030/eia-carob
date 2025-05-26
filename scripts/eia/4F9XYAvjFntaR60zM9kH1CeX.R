@@ -83,7 +83,7 @@ carob_script <- function(path) {
    
    geo <- data.frame(
       adm1= c("Can Tho","Tien Giang", "Long An", "Soc Trang", "Dong Thap"),
-      latidude= c(10.04163, 10.37189, 10.56061, 9.60256, 10.39079),
+      latitude= c(10.04163, 10.37189, 10.56061, 9.60256, 10.39079),
       longitude= c(105.86858, 106.15924, 106.64956, 105.97296, 105.550048)
    )
    
