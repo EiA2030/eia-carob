@@ -88,11 +88,11 @@ carob_script <- function(path) {
       energy_consumption= r$Irrigation.energy._consumption,
       Gross_income= r$gross.income,
       currency= "USD",
-      geo_from_source = TRUE,
+      geo_from_source = TRUE, 
       yield_part= r$yield_part
    )
    
-   d$irrigation_method <- gsub("Surface- flood", "surface-flooding", d$irrigation_method)
+   d$irrigation_method <- gsub("Surface- flood", "uncontrolled flooding", d$irrigation_method)
    d$irrigation_method <- gsub("Surface-furrow", "furrow", d$irrigation_method)
    
    carobiner::write_files(meta, d, path=path)
