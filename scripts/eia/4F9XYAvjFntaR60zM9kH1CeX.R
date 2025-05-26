@@ -55,14 +55,14 @@ carob_script <- function(path) {
       season= r$Season,
       treatment= r$Name,
       seed_rate= r$Seed.rate.kg.ha,
-      fertilizer_typ= "NPK",
+      fertilizer_type= "NPK",
       N_fertilizer= r$Ferilizer.N.kg.ha,
       P_fertilizer= r$Ferilizer.P2O5.kg.ha/2.29,
       K_fertilizer= r$Ferilizer.K2O.kg.ha/1.2051,
       yield= r$Yield.t.ha*1000, ### Kg/ha
       productivity_rate= r$Labor.productivity.kg.day, ## 
       planting_date= substr(r$Year, 1, 4),
-      NI= r$Net.income.USD.ha.1 , ## per hactar
+      Net_income= r$Net.income.USD.ha.1 , ## per hactar
       currency= "USD",
       N_PFP= r$PFPN.kg.kg, #Partial factor productivity of N (measure of efficiency of N input use)
       P_PFP= r$PFPP.kg.kg,
