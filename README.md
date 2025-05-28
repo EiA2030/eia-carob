@@ -37,4 +37,5 @@ For additional information on what is carob and how it is used, please visit [ht
 | [zdaA2DuaaJI5HOVtSrlLmOCj](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/zdaA2DuaaJI5HOVtSrlLmOCj.R) | NG-Akilimo-MC Sprout | USC013 | validation | Nigeria-Sprout-Validation |
 | [ImiFQEDZHoIrTVUOBdn3uj7J](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/ImiFQEDZHoIrTVUOBdn3uj7J.R) | GH-CerLeg-Esoko | USC010 | validation | Ghana-Soybean-Validation |
 | [uGSZBoxcQvKaOxMuol29Zk2y](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/uGSZBoxcQvKaOxMuol29Zk2y.R) | WA-Rice-ATAFI/MOVE | USC001 | MELIA | Nigeria-ATAFI-MELIA |
+| [4F9XYAvjFntaR60zM9kH1CeX](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/4F9XYAvjFntaR60zM9kH1CeX.R) | SEA-DSRC-Vietnam | USC018 | validation | Vietnam-DSRC-Validation |
 | [Y3KiAwOxSyM0VS2YXj83K7SR](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/Y3KiAwOxSyM0VS2YXj83K7SR.R) | EG-Irrigated-Gvt | USC004 | validation | Egypt-Government-Validation |
