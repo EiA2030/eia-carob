@@ -21,7 +21,7 @@ carob_script <- function(path) {
       uri = uri,
       dataset_id = uri,
       publication= NA,
-      authors ="Samar Ataher; Ajit Govind",
+      authors ="Samar Ataher;Ajit Govind",
       data_institute ="ICARDA",
       title = "Use Case 1.9: Gvt Egypt -  yield gap monitoring and tailored agronomy advisory for irrigated wheat and faba bean.",
       group = group,
@@ -30,7 +30,7 @@ carob_script <- function(path) {
       usecase_code= "USC004",
       usecase_name = 'EG-Irrigated-Gvt',
       activity = 'validation',
-      treatment_vars = "soil_pH;soil_EC;previous_crop;seed_density;irrigation_method;irrigation_amount",
+      treatment_vars = "soil_pH;soil_EC;previous_crop;seed_rate;irrigation_method;irrigation_amount",
       response_vars= "yield;gross_income",
       project = 'Excellence in Agronomy',
       data_type = "on-farm experiment",
@@ -66,7 +66,7 @@ carob_script <- function(path) {
      season= r$season,
       treatment= r$treatment,
       seed_rate= r$seeding.rate,
-     fertilizer_type= "Urea", # Definitely not NPK...
+     fertilizer_type= "urea", # Definitely not NPK...
      N_fertilizer= r$N_fertilizer_unit,
       P_fertilizer= 0,
       K_fertilizer= 0,
@@ -84,18 +84,22 @@ carob_script <- function(path) {
       irrigation_number= as.integer(r$irrigation_number),
       irrigation_amount= r$irrigation_amount,
       irrigated= TRUE,
-      water_productivity= r$WP, ## Kg/m3 ?
+     # EGB: Secondary parameter
+      # water_productivity= r$WP, ## Kg/m3 ?
+     # EGB: Secondary parameter
       # N_NUE= r$N_NUE, ## Nitrogen Use Efficiency
       energy_consumption= r$Irrigation.energy._consumption,
-      Gross_income= r$gross.income,
+     # EGB: Secondary parameter
+      # Gross_income= r$gross.income,
       currency= "USD",
-     crop_price = r$gross.income/r$yield*1000,
+     crop_price = r$gross.income/(r$yield*1000),
       geo_from_source = TRUE, 
       yield_part= r$yield_part
    )
    
    d$irrigation_method <- gsub("Surface- flood", "uncontrolled flooding", d$irrigation_method)
    d$irrigation_method <- gsub("Surface-furrow", "furrow", d$irrigation_method)
+   d$previous_crop[d$previous_crop == "zucchini"] <- "squash"
    
    carobiner::write_files(meta, d, path=path)
 }
