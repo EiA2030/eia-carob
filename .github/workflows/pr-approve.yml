@@ -1,13 +1,12 @@
-name: Pull Request Check - Dev
+name: Pull Request Approved - Dev
 
 on:
-  workflow_dispatch:  # allows manual triggering
-  pull_request:
+  push:
     branches:
       - development
 
 jobs:
-  run-changed-r:
+  post-merge:
     runs-on: ubuntu-latest
 
     container:
@@ -93,8 +92,20 @@ jobs:
         CHANGED_FILES=$(git diff --name-only origin/development...HEAD | grep '\.R$' || true)
         for file in $CHANGED_FILES; do
           echo "Running changed file: $file \n"
-          echo "Outputs from running: $file \n" >> $LOGFILE
-          su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript -e 'path <- getwd(); source(\"$file\"); out <- capture.output(carob_script(path)); cat(out, sep = \"\\n\")'" >> $LOGFILE 2>&1
+          echo $(basename "$file") >> $LOGFILE
+          su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript -e 'path <- getwd(); source(\"$file\"); carob_script(path)'"
+          az storage blob upload \
+            --account-name kapi \
+            --container-name dev-eia-carob-clean \
+            --name "$(basename "${file%.R}").csv" \
+            --file /__w/eia-carob/eia-carob/data/clean/eia/$(basename "${file%.R}").csv \
+            --overwrite --auth-mode login
+          az storage blob upload \
+            --account-name kapi \
+            --container-name dev-eia-carob-clean \
+            --name "$(basename "${file%.R}")_meta.csv" \
+            --file /__w/eia-carob/eia-carob/data/clean/eia/$(basename "${file%.R}")_meta.csv \
+            --overwrite --auth-mode login
         done
         echo "REVIEW_LOG<<EOF" >> $GITHUB_OUTPUT
         cat $LOGFILE >> $GITHUB_OUTPUT
@@ -111,5 +122,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: "### 🧪 Review of R scripts:\n" + output + "\n*This message is generated automatically. Please review the PR before merging.*\n"
+            body: "### ♻️ Dataset added: " + output + "\n*This message is generated automatically.\n"
           });
