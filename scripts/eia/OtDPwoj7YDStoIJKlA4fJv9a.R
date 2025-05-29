@@ -31,7 +31,7 @@ carob_script <- function(path) {
       usecase_name = 'MO-Wheat-Gvt',
       activity = 'validation',
       treatment_vars= "N_fertilizer; P_fertilizer; K_fertilizer",
-      response_vars= "fw_yield; fwy_residue",
+      response_vars= "fw_yield",
       project = 'Excellence in Agronomy',
       data_type = "experiment",
       carob_date="2025-05-29",
@@ -55,8 +55,8 @@ carob_script <- function(path) {
          adm1= tolower(r$adm1),
          adm2= tolower(r$adm2),
          adm3= tolower(r$adm3),
-         longitude= r$Coord.Y,
-         latitude= r$Coord.X,
+         latitude= r$Coord.Y,
+         longitude= r$Coord.X,
          soil_pH= r$pH,
          soil_SOM= r$MO,
          soil_P_available= r$P2O5/2.29,
@@ -87,6 +87,10 @@ carob_script <- function(path) {
    
    d <- lapply(ff, proc)
    d <- do.call(rbind, d)
+   
+   ##Fixing conflict error
+   d$longitude <- ifelse(grepl("asjen", d$adm3),-5.6158859, d$longitude )
+   d$latitude <- ifelse(grepl("asjen", d$adm3), 34.84769, d$latitude)
    
    
    carobiner::write_files(meta, d, path=path)
