@@ -31,7 +31,7 @@ carob_script <- function(path) {
       usecase_name = 'MO-Wheat-Gvt',
       activity = 'validation',
       treatment_vars= "N_fertilizer; P_fertilizer; K_fertilizer",
-      response_vars= "fw_yield",
+      response_vars= "fw_yield;fwy_residue",
       project = 'Excellence in Agronomy',
       data_type = "experiment",
       carob_date="2025-05-29",
@@ -55,8 +55,8 @@ carob_script <- function(path) {
          adm1= tolower(r$adm1),
          adm2= tolower(r$adm2),
          adm3= tolower(r$adm3),
-         latitude= r$Coord.Y,
-         longitude= r$Coord.X,
+         latitude= as.numeric(r$Coord.Y),
+         longitude= as.numeric(r$Coord.X),
          soil_pH= r$pH,
          soil_SOM= r$MO,
          soil_P_available= r$P2O5/2.29,
@@ -80,7 +80,9 @@ carob_script <- function(path) {
          geo_from_source = TRUE,
          herbicide_used= TRUE,
          herbicide_dates= paste0(r$year, "-03-15"), ## mid March
-         yield_part= "grain"
+         yield_part= "grain",
+         on_farm= TRUE, 
+         is_survey= FALSE
       )
       
    }
@@ -91,7 +93,8 @@ carob_script <- function(path) {
    ##Fixing conflict error
    d$longitude <- ifelse(grepl("asjen", d$adm3),-5.6158859, d$longitude )
    d$latitude <- ifelse(grepl("asjen", d$adm3), 34.84769, d$latitude)
-   
+   #### Fixing previous crop
+   d$previous_crop[grepl("fallow", d$previous_crop)] <- "none"
    
    carobiner::write_files(meta, d, path=path)
 }
