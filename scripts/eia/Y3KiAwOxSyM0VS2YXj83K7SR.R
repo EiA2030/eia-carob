@@ -30,10 +30,10 @@ carob_script <- function(path) {
       usecase_code= "USC004",
       usecase_name = 'EG-Irrigated-Gvt',
       activity = 'validation',
-      treatment_vars= "seed_rate",
-      response_vars= "yield",
+      treatment_vars = "soil_pH;soil_EC;previous_crop;seed_rate;irrigation_method;irrigation_amount",
+      response_vars= "yield;gross_income",
       project = 'Excellence in Agronomy',
-      data_type = "experiment",
+      data_type = "on-farm experiment",
       carob_date="2025-05-15",
       notes= NA
    )
@@ -47,26 +47,27 @@ carob_script <- function(path) {
    ## Processing data 
    r <- carobiner::read.excel(f, fix_names = TRUE)
    d <- data.frame(
-      country= r$country,
+     dataset_id = uri,
+     country= r$country,
       crop = r$crop,
       previous_crop= ifelse(grepl("soya bean|soybeans", tolower(r$previous_crop)), "soybean",
                             ifelse(grepl("green beans", tolower(r$previous_crop)), "green bean", 
                                    ifelse(grepl("seasame", tolower(r$previous_crop)), "sesame",
                                           ifelse(grepl("cane", tolower(r$previous_crop)), "sugarcane",tolower(r$previous_crop))))),
       variety= r$variety,
-      on_farm = TRUE ,
-      is_survey = FALSE,
+     on_farm = as.logical(r$on_farm),
+     is_survey = FALSE,
       adm1= r$adm1,
       adm2= r$adm2,
       adm3= r$adm3,
       latitude= r$latitude,
       longitude= r$longitude,
-      trial_id = r$dataset_id,
-      season= r$season,
+     trial_id = as.character(match(r$longitude, unique(r$longitude))),
+     season= r$season,
       treatment= r$treatment,
       seed_rate= r$seeding.rate,
-      fertilizer_type= "NPK",
-      N_fertilizer= r$N_fertilizer_unit,
+     fertilizer_type= "urea", # Definitely not NPK...
+     N_fertilizer= r$N_fertilizer_unit,
       P_fertilizer= 0,
       K_fertilizer= 0,
       yield= r$yield*1000, ## in Kg/ha
@@ -78,22 +79,27 @@ carob_script <- function(path) {
       soil_texture= gsub("clay-loam","clay;loam",tolower(r$soil_texture)),
       soil_pH= r$soil_pH,
       soil_EC= r$soil_EC,
-      Total_Eto= r$Total_Eto, ## Evapotranspiration
-      irrigation_method= r$irrigation_method,
+     evapotranspiration = r$Total_Eto, ## Evapotranspiration
+     irrigation_method= r$irrigation_method,
       irrigation_number= as.integer(r$irrigation_number),
       irrigation_amount= r$irrigation_amount,
       irrigated= TRUE,
-      water_productivity= r$WP, ## Kg/m3 ?
-      N_NUE= r$N_NUE, ## Nitrogen Use Efficiency
+     # EGB: Secondary parameter
+      # water_productivity= r$WP, ## Kg/m3 ?
+     # EGB: Secondary parameter
+      # N_NUE= r$N_NUE, ## Nitrogen Use Efficiency
       energy_consumption= r$Irrigation.energy._consumption,
-      Gross_income= r$gross.income,
+     # EGB: Secondary parameter
+      # Gross_income= r$gross.income,
       currency= "USD",
+     crop_price = r$gross.income/(r$yield*1000),
       geo_from_source = TRUE, 
       yield_part= r$yield_part
    )
    
    d$irrigation_method <- gsub("Surface- flood", "uncontrolled flooding", d$irrigation_method)
    d$irrigation_method <- gsub("Surface-furrow", "furrow", d$irrigation_method)
+   d$previous_crop[d$previous_crop == "zucchini"] <- "squash"
    
    carobiner::write_files(meta, d, path=path)
 }
