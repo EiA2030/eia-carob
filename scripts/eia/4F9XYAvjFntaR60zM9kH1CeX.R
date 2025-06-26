@@ -27,7 +27,7 @@ carob_script <- function(path) {
       carob_contributor = 'Cedric Ngakou',
       usecase_code= "USC018",
       usecase_name = 'SEA-DSRC-Vietnam',
-      activity = 'validtion',
+      activity = 'validation',
       treatment_vars= "seed_rate; N_fertilizer; P_fertilizer; K_fertilizer",
       response_vars= "yield",
       project = 'Excellence in Agronomy',
@@ -60,13 +60,15 @@ carob_script <- function(path) {
       P_fertilizer= r$Ferilizer.P2O5.kg.ha/2.29,
       K_fertilizer= r$Ferilizer.K2O.kg.ha/1.2051,
       yield= r$Yield.t.ha*1000, ### Kg/ha
-      productivity_rate= r$Labor.productivity.kg.day, ## 
+      labor_productivity = r$Labor.productivity.kg.day, ## 
       planting_date= substr(r$Year, 1, 4),
+      # EGB: Not sure of this, need to review with Celine
       Net_income= r$Net.income.USD.ha.1 , ## per hactar
       currency= "USD",
-      N_PFP= r$PFPN.kg.kg, #Partial factor productivity of N (measure of efficiency of N input use)
-      P_PFP= r$PFPP.kg.kg,
-      K_PFP= r$PFPK.kg.kg,
+      # # EGB: Secondary parameters
+      # N_PFP= r$PFPN.kg.kg, #Partial factor productivity of N (measure of efficiency of N input use)
+      # P_PFP= r$PFPP.kg.kg,
+      # K_PFP= r$PFPK.kg.kg,
       Energy_Efficiency= r$Energy.efficiency.GJ.ha,
       GHG_emissions= r$GHGe.kg.CO2eq.ha,
       carbonFootprint_soil= r$CF.Soil.emission.kg.CO2eq.kg.rice,
@@ -91,5 +93,3 @@ carob_script <- function(path) {
    
    carobiner::write_files(meta, d, path=path)
 }
-
-#carob_script(path)
