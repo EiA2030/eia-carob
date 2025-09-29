@@ -57,6 +57,25 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_SP }}
+        
+    - name: Configure AzCopy using Service Principal
+      env:
+        AZURE_SP_JSON: ${{ secrets.AZURE_SP }}
+      run: |
+        CLIENT_ID=$(printf '%s' "$AZURE_SP_JSON" | jq -r .clientId)
+        CLIENT_SECRET=$(printf '%s' "$AZURE_SP_JSON" | jq -r .clientSecret)
+        TENANT_ID=$(printf '%s' "$AZURE_SP_JSON" | jq -r .tenantId)
+
+        export AZCOPY_AUTO_LOGIN_TYPE=SPN
+        export AZCOPY_SPA_CLIENT_ID="$CLIENT_ID"
+        export AZCOPY_SPA_CLIENT_SECRET="$CLIENT_SECRET"
+        export AZCOPY_TENANT_ID="$TENANT_ID"
+
+        # Login AzCopy with SPN
+        azcopy login --service-principal
+
+        # verify auth (prints account name or success info)
+        azcopy login --check || true
 
     - name: Create data directory
       run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
@@ -104,11 +123,13 @@ jobs:
     #         --file "$dest" \
     #         --auth-mode login
     #     done <<< "$BLOBS"
-    - name: Download source data from Azure Blob
+    - name: Download source data from Azure Blob with AzCopy
       run: |
-        mkdir -p /home/jovyan/carob-eia/data/raw/eia
-        azcopy login --identity || true   # fallback if managed identity not available
-        azcopy copy "https://kapi.blob.core.windows.net/eia-carob-raw" "/home/jovyan/carob-eia/data/raw/eia" --recursive=true
+        SRC_ACCOUNT="kapi"
+        SRC_CONTAINER="eia-carob-raw"
+        DEST="/home/jovyan/carob-eia/data/raw/eia"
+        echo "Starting azcopy from https://$SRC_ACCOUNT.blob.core.windows.net/$SRC_CONTAINER"
+        azcopy copy "https://$SRC_ACCOUNT.blob.core.windows.net/$SRC_CONTAINER" "$DEST" --recursive=true
 
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
