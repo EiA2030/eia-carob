@@ -7,32 +7,7 @@ on:
       - development
 
 jobs:
-  check-merge:
-    runs-on: ubuntu-latest
-    outputs:
-      is_merged_pr: ${{ steps.check.outputs.is_merged_pr }}
-      pr_number: ${{ steps.check.outputs.pr_number }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Check if last commit is a merged PR
-        id: check
-        run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-
-          if echo "$COMMIT_MSG" | grep -q "Merge pull request"; then
-            echo "is_merged_pr=true" >> $GITHUB_OUTPUT
-            PR_NUMBER=$(echo "$COMMIT_MSG" | sed -n 's/Merge pull request #\([0-9]*\).*/\1/p')
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "is_merged_pr=false" >> $GITHUB_OUTPUT
-          fi
-  
   post-merge:
-    needs: check-merge
-    if: needs.check-merge.outputs.is_merged_pr == 'true'
     runs-on: ubuntu-latest
 
     container:
@@ -40,18 +15,6 @@ jobs:
       options: --user root  # needed to write to /home
 
     steps:
-    # - name: Check if commit is a merged PR
-    #   run: |
-    #     echo "Last commit message:"
-    #     git log -1 --pretty=%B
-    # 
-    #     if git log -1 --pretty=%B | grep -q "Merge pull request"; then
-    #       echo "This is a merged PR. Continuing..."
-    #     else
-    #       echo "Not a merged PR. Skipping workflow."
-    #       exit 0
-    #     fi
-
     - name: Set up jovyan user
       run: |
         useradd -m -s /bin/bash jovyan
@@ -130,7 +93,7 @@ jobs:
         CHANGED_FILES=$(git diff --name-only origin/development...HEAD | grep '\.R$' || true)
         for file in $CHANGED_FILES; do
           echo "Running changed file: $file \n"
-          echo $(basename "${file%.R}").csv >> $LOGFILE
+          echo $(basename "$file") >> $LOGFILE
           su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript -e 'path <- getwd(); source(\"$file\"); carob_script(path)'"
           az storage blob upload \
             --account-name kapi \
@@ -149,39 +112,16 @@ jobs:
         cat $LOGFILE >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Extract PR number from merge commit
-      id: extract_pr
-      run: |
-        PR_NUMBER=$(git log -1 --pretty=%B | sed -n 's/Merge pull request #\([0-9]*\).*/\1/p')
-        echo "Extracted PR number: $PR_NUMBER"
-        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-    
-    - name: Add comment to merged PR with dataset info
-      if: steps.extract_pr.outputs.pr_number != ''
+    - name: Add comments to PR
       uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const prNumber = parseInt("${{ steps.extract_pr.outputs.pr_number }}", 10);
-          const reviewLog = `\`\`\`\n${{ steps.review.outputs.REVIEW_LOG }}\n\`\`\``;
-
-          await github.rest.issues.createComment({
+          const output = `\`\`\`${{ steps.review.outputs.REVIEW_LOG }}\`\`\``;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            issue_number: needs.check-merge.outputs.pr_number,
-            body: `### ✅ Dataset(s) processed after merge:\n${reviewLog}\n\n*This message was generated automatically after merging the PR.*`
+            body: "### ♻️ Dataset added: " + output + "\n*This message is generated automatically.\n"
           });
-          
-    # - name: Add comments to PR
-    #   uses: actions/github-script@v7
-    #   if: github.event_name == 'pull_request'
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       const output = `\`\`\`${{ steps.review.outputs.REVIEW_LOG }}\`\`\``;
-    #       github.rest.issues.createComment({
-    #         issue_number: context.issue.number,
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         body: "### ♻️ Dataset added: " + output + "\n*This message is generated automatically.\n"
-    #       });

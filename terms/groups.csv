@@ -1,2 +1,3 @@
 "name","include","description"
 "eia","location; crop; soil","Excellence in Agronomy CGIAR initiative use case data from several activities"
+"program","location; crop; soil","Name of the Program or Initiative the data is coming from"
