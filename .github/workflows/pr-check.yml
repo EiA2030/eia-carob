@@ -54,13 +54,50 @@ jobs:
     - name: Create data directory
       run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
 
+    # - name: Download source data from Azure Blob
+    #   run: |
+    #     az storage blob download-batch \
+    #       --account-name kapi \
+    #       --destination /home/jovyan/carob-eia/data/raw/eia \
+    #       --source eia-carob-raw \
+    #       --auth-mode login
     - name: Download source data from Azure Blob
       run: |
-        az storage blob download-batch \
-          --account-name kapi \
-          --destination /home/jovyan/carob-eia/data/raw/eia \
-          --source eia-carob-raw \
-          --auth-mode login
+        set -euo pipefail
+        SRC_CONTAINER="eia-carob-raw"
+        DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
+        ACCOUNT="kapi"
+    
+        mkdir -p "$DEST_ROOT"
+    
+        echo "Listing blobs..."
+        BLOBS=$(az storage blob list \
+          --account-name "kapi" \
+          --container-name "eia-carob-raw" \
+          --auth-mode login \
+          --query "[].name" -o tsv)
+    
+        echo "Found blobs:"
+        echo "$BLOBS"
+    
+        if [ -z "$BLOBS" ]; then
+          echo "No blobs found (container empty?)"
+          exit 0
+        fi
+    
+        while IFS= read -r blob; do
+          # preserve virtual folders in blob name
+          dest="/home/jovyan/carob-eia/data/raw/eia/$blob"
+          destdir=$(dirname "$dest")
+          mkdir -p "$destdir"
+          echo "Downloading blob: $blob -> $dest"
+          az storage blob download \
+            --account-name "kapi" \
+            --container-name "eia-carob-raw" \
+            --name "$blob" \
+            --file "$dest" \
+            --auth-mode login
+        done <<< "$BLOBS"
 
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
