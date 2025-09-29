@@ -1,6 +1,7 @@
 name: Pull Request Approved - Dev
 
 on:
+  workflow_dispatch:  # allows manual triggering
   push:
     branches:
       - development

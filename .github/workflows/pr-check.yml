@@ -40,7 +40,7 @@ jobs:
     - name: Install Azure CLI
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-
+        
     - name: Checkout code
       uses: actions/checkout@v3
       with:
@@ -54,13 +54,43 @@ jobs:
     - name: Create data directory
       run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
 
+    # - name: Download source data from Azure Blob
+    #   run: |
+    #     az storage blob download-batch \
+    #       --account-name kapi \
+    #       --destination /home/jovyan/carob-eia/data/raw/eia \
+    #       --source eia-carob-raw \
+    #       --auth-mode login
     - name: Download source data from Azure Blob
       run: |
-        az storage blob download-batch \
-          --account-name kapi \
-          --destination /home/jovyan/carob-eia/data/raw/eia \
-          --source eia-carob-raw \
-          --auth-mode login
+        SRC_CONTAINER="eia-carob-raw"
+        DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
+        ACCOUNT="kapi"
+
+        BLOBS=$(az storage blob list \
+          --account-name "$ACCOUNT" \
+          --container-name "$SRC_CONTAINER" \
+          --auth-mode login \
+          -o json 2>/dev/null | jq -r '.[].name')
+
+        echo "$BLOBS" | while IFS= read -r blob; do
+          # skip suspicious entries that look like local paths or error lines
+          case "$blob" in
+            /*|*__w*|*temp* ) echo "Skipping suspicious blob name: $blob" ; continue ;;
+          esac
+    
+          dest="$DEST_ROOT/$blob"
+          destdir=$(dirname "$dest")
+          mkdir -p "$destdir"
+          echo "Downloading blob: $blob -> $dest"
+          az storage blob download \
+            --account-name "$ACCOUNT" \
+            --container-name "$SRC_CONTAINER" \
+            --name "$blob" \
+            --file "$dest" \
+            --auth-mode login \
+            -o none > /dev/null
+        done
 
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
