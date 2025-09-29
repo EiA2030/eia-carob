@@ -41,13 +41,6 @@ jobs:
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | bash
         
-    - name: Install AzCopy
-      run: |
-        curl -sL https://aka.ms/downloadazcopy-v10-linux | tar -xz
-        cp ./azcopy_linux_amd64_*/azcopy /usr/local/bin/
-        chmod +x /usr/local/bin/azcopy
-        azcopy --version
-
     - name: Checkout code
       uses: actions/checkout@v3
       with:
@@ -57,25 +50,6 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_SP }}
-        
-    - name: Configure AzCopy using Service Principal
-      env:
-        AZURE_SP_JSON: ${{ secrets.AZURE_SP }}
-      run: |
-        CLIENT_ID=$(printf '%s' "$AZURE_SP_JSON" | jq -r .clientId)
-        CLIENT_SECRET=$(printf '%s' "$AZURE_SP_JSON" | jq -r .clientSecret)
-        TENANT_ID=$(printf '%s' "$AZURE_SP_JSON" | jq -r .tenantId)
-
-        export AZCOPY_AUTO_LOGIN_TYPE=SPN
-        export AZCOPY_SPA_CLIENT_ID="$CLIENT_ID"
-        export AZCOPY_SPA_CLIENT_SECRET="$CLIENT_SECRET"
-        export AZCOPY_TENANT_ID="$TENANT_ID"
-
-        # Login AzCopy with SPN
-        azcopy login --service-principal
-
-        # verify auth (prints account name or success info)
-        azcopy login --check || true
 
     - name: Create data directory
       run: mkdir -p /home/jovyan/carob-eia/data/raw/eia
@@ -87,49 +61,35 @@ jobs:
     #       --destination /home/jovyan/carob-eia/data/raw/eia \
     #       --source eia-carob-raw \
     #       --auth-mode login
-    # - name: Download source data from Azure Blob
-    #   run: |
-    #     SRC_CONTAINER="eia-carob-raw"
-    #     DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
-    #     ACCOUNT="kapi"
-    # 
-    #     mkdir -p "/home/jovyan/carob-eia/data/raw/eia"
-    # 
-    #     echo "Listing blobs..."
-    #     BLOBS=$(az storage blob list \
-    #       --account-name "kapi" \
-    #       --container-name "eia-carob-raw" \
-    #       --auth-mode login \
-    #       --query "[].name" -o tsv)
-    # 
-    #     echo "Found blobs:"
-    #     echo "$BLOBS"
-    # 
-    #     if [ -z "$BLOBS" ]; then
-    #       echo "No blobs found (container empty?)"
-    #       exit 0
-    #     fi
-    # 
-    #     while IFS= read -r blob; do
-    #       # preserve virtual folders in blob name
-    #       dest="/home/jovyan/carob-eia/data/raw/eia/$blob"
-    #       destdir=$(dirname "$dest")
-    #       mkdir -p "$destdir"
-    #       echo "Downloading blob: $blob -> $dest"
-    #       az storage blob download \
-    #         --account-name "kapi" \
-    #         --container-name "eia-carob-raw" \
-    #         --name "$blob" \
-    #         --file "$dest" \
-    #         --auth-mode login
-    #     done <<< "$BLOBS"
-    - name: Download source data from Azure Blob with AzCopy
+    - name: Download source data from Azure Blob
       run: |
-        SRC_ACCOUNT="kapi"
         SRC_CONTAINER="eia-carob-raw"
-        DEST="/home/jovyan/carob-eia/data/raw/eia"
-        echo "Starting azcopy from https://$SRC_ACCOUNT.blob.core.windows.net/$SRC_CONTAINER"
-        azcopy copy "https://$SRC_ACCOUNT.blob.core.windows.net/$SRC_CONTAINER" "$DEST" --recursive=true
+        DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
+        ACCOUNT="kapi"
+
+        BLOBS=$(az storage blob list \
+          --account-name "$ACCOUNT" \
+          --container-name "$SRC_CONTAINER" \
+          --auth-mode login \
+          -o json 2>/dev/null | jq -r '.[].name')
+
+        echo "$BLOBS" | while IFS= read -r blob; do
+          # skip suspicious entries that look like local paths or error lines
+          case "$blob" in
+            /*|*__w*|*temp* ) echo "Skipping suspicious blob name: $blob" ; continue ;;
+          esac
+    
+          dest="$DEST_ROOT/$blob"
+          destdir=$(dirname "$dest")
+          mkdir -p "$destdir"
+          echo "Downloading blob: $blob -> $dest"
+          az storage blob download \
+            --account-name "$ACCOUNT" \
+            --container-name "$SRC_CONTAINER" \
+            --name "$blob" \
+            --file "$dest" \
+            --auth-mode login
+        done
 
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
