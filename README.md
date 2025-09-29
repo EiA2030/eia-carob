@@ -38,3 +38,4 @@ For additional information on what is carob and how it is used, please visit [ht
 | [ImiFQEDZHoIrTVUOBdn3uj7J](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/ImiFQEDZHoIrTVUOBdn3uj7J.R) | GH-CerLeg-Esoko | USC010 | validation | Ghana-Soybean-Validation |
 | [uGSZBoxcQvKaOxMuol29Zk2y](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/uGSZBoxcQvKaOxMuol29Zk2y.R) | WA-Rice-ATAFI/MOVE | USC001 | MELIA | Nigeria-ATAFI-MELIA |
 | [OtDPwoj7YDStoIJKlA4fJv9a](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/OtDPwoj7YDStoIJKlA4fJv9a.R) | MO-Wheat-Gvt | USC017 | validation | Morocco-Government-Validation |
+| [dvcGW3xxMuK6QCHu1up1lMzu](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/dvcGW3xxMuK6QCHu1up1lMzu.R) | EG-Irrigated-Gvt | USC004 | validation | Egypt-Government-Validation |
