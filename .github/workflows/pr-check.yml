@@ -63,7 +63,6 @@ jobs:
     #       --auth-mode login
     - name: Download source data from Azure Blob
       run: |
-        set -euo pipefail
         SRC_CONTAINER="eia-carob-raw"
         DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
         ACCOUNT="kapi"
