@@ -40,6 +40,13 @@ jobs:
     - name: Install Azure CLI
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        
+    - name: Install AzCopy
+      run: |
+        curl -sL https://aka.ms/downloadazcopy-v10-linux | tar -xz
+        cp ./azcopy_linux_amd64_*/azcopy /usr/local/bin/
+        chmod +x /usr/local/bin/azcopy
+        azcopy --version
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -61,42 +68,47 @@ jobs:
     #       --destination /home/jovyan/carob-eia/data/raw/eia \
     #       --source eia-carob-raw \
     #       --auth-mode login
+    # - name: Download source data from Azure Blob
+    #   run: |
+    #     SRC_CONTAINER="eia-carob-raw"
+    #     DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
+    #     ACCOUNT="kapi"
+    # 
+    #     mkdir -p "/home/jovyan/carob-eia/data/raw/eia"
+    # 
+    #     echo "Listing blobs..."
+    #     BLOBS=$(az storage blob list \
+    #       --account-name "kapi" \
+    #       --container-name "eia-carob-raw" \
+    #       --auth-mode login \
+    #       --query "[].name" -o tsv)
+    # 
+    #     echo "Found blobs:"
+    #     echo "$BLOBS"
+    # 
+    #     if [ -z "$BLOBS" ]; then
+    #       echo "No blobs found (container empty?)"
+    #       exit 0
+    #     fi
+    # 
+    #     while IFS= read -r blob; do
+    #       # preserve virtual folders in blob name
+    #       dest="/home/jovyan/carob-eia/data/raw/eia/$blob"
+    #       destdir=$(dirname "$dest")
+    #       mkdir -p "$destdir"
+    #       echo "Downloading blob: $blob -> $dest"
+    #       az storage blob download \
+    #         --account-name "kapi" \
+    #         --container-name "eia-carob-raw" \
+    #         --name "$blob" \
+    #         --file "$dest" \
+    #         --auth-mode login
+    #     done <<< "$BLOBS"
     - name: Download source data from Azure Blob
       run: |
-        SRC_CONTAINER="eia-carob-raw"
-        DEST_ROOT="/home/jovyan/carob-eia/data/raw/eia"
-        ACCOUNT="kapi"
-    
-        mkdir -p "$DEST_ROOT"
-    
-        echo "Listing blobs..."
-        BLOBS=$(az storage blob list \
-          --account-name "kapi" \
-          --container-name "eia-carob-raw" \
-          --auth-mode login \
-          --query "[].name" -o tsv)
-    
-        echo "Found blobs:"
-        echo "$BLOBS"
-    
-        if [ -z "$BLOBS" ]; then
-          echo "No blobs found (container empty?)"
-          exit 0
-        fi
-    
-        while IFS= read -r blob; do
-          # preserve virtual folders in blob name
-          dest="/home/jovyan/carob-eia/data/raw/eia/$blob"
-          destdir=$(dirname "$dest")
-          mkdir -p "$destdir"
-          echo "Downloading blob: $blob -> $dest"
-          az storage blob download \
-            --account-name "kapi" \
-            --container-name "eia-carob-raw" \
-            --name "$blob" \
-            --file "$dest" \
-            --auth-mode login
-        done <<< "$BLOBS"
+        mkdir -p /home/jovyan/carob-eia/data/raw/eia
+        azcopy login --identity || true   # fallback if managed identity not available
+        azcopy copy "https://kapi.blob.core.windows.net/eia-carob-raw" "/home/jovyan/carob-eia/data/raw/eia" --recursive=true
 
     - name: Install remotes package
       run: Rscript -e 'install.packages("remotes")'
