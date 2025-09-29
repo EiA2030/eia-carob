@@ -124,7 +124,7 @@ jobs:
         for file in $CHANGED_FILES; do
           echo "Running changed file: $file \n"
           echo "Outputs from running: $file \n" >> $LOGFILE
-          su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript 'path <- getwd(); source(\"$file\"); out <- capture.output(carob_script(path)); cat(out, sep = \"\\n\")'" >> $LOGFILE 2>&1
+          su - jovyan bash -c "cd /__w/eia-carob/eia-carob && Rscript -e 'path <- getwd(); source(\"$file\"); out <- capture.output(carob_script(path)); cat(out, sep = \"\\n\")'" >> $LOGFILE 2>&1
         done
         echo "REVIEW_LOG<<EOF" >> $GITHUB_OUTPUT
         cat $LOGFILE >> $GITHUB_OUTPUT
