@@ -17,9 +17,10 @@ carob_script <- function(path) {
     uri = uri,
     dataset_id = uri,
     authors = "Elke Vandamme; Bester Mudereri; Rhys Manners",
-    data_institute = "CIP",
-    title = NA,
-    description ="Rwanda RAB Use Case Validations for potato and rice in 2022",
+    data_organization = "CIP",
+    data_citation = NA,
+    title = "Use Case 1.2: SNS/RAB - optimized soil fertility enhancement in priority crops.",
+    description ="The Excellence in Agronomy (EiA) Initiative has formed a collaboration with RAB and its Rwanda Soil Information System (RwaSIS) project to create a fertilizer recommendation tool for six key crops (cassava, maize, wheat, potato, rice, and beans) that seamlessly integrates with the Smart Nkunganire System (SNS). The SNS is an established digital platform, developed through a public-private partnership involving BKTechouse and RAB, boasting over 1.5 million registered users and currently employed for agro-input supply management.</p>\r\n\r\n<p>The fertilizer recommendation tool will offer improved, location-specific fertilizer recommendations, while being consistently maintained and updated by the Rwanda Agriculture and Animal Resources Board (RAB). Moreover, it will serve as a tangible example to facilitate the future inclusion of various other forms of agronomic advice within the SNS framework.",
     license = NA,
     group = group,
     publication= "hdl:10568/163020",
@@ -260,7 +261,16 @@ carob_script <- function(path) {
   d4$crop_price <- d4$crop_price/1000
   d4$crop_price[d4$crop == "potato"] <- 480
   d4$fertilizer_price <- 675
+  
+  d4$yield <- d4$fw_yield * (1 - ifelse(is.na(d4$yield_moisture), 20, d4$yield_moisture)/100) # Assuming 20% moisture content when it is missing
+  d4$yield_moisture <- ifelse(is.na(d4$yield_moisture), 20, d4$yield_moisture)
+  d4$yield_isfresh <- TRUE
+  d4$fw_yield <- NULL
+  
+  # Some more fixes
+  d4$previous_crop_residue_management <- ifelse(d4$previous_crop_residue_management == "", NA, d4$previous_crop_residue_management)
+  d4$land_prep_method <- ifelse(d4$land_prep_method == "", NA, d4$land_prep_method)
 
-  carobiner::write_files(meta, d4, path=path)
+  carobiner::write_files(meta, d4, path = path)
   
 }
