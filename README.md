@@ -39,3 +39,5 @@ For additional information on what is carob and how it is used, please visit [ht
 | [uGSZBoxcQvKaOxMuol29Zk2y](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/uGSZBoxcQvKaOxMuol29Zk2y.R) | WA-Rice-ATAFI/MOVE | USC001 | MELIA | Nigeria-ATAFI-MELIA |
 | [OtDPwoj7YDStoIJKlA4fJv9a](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/OtDPwoj7YDStoIJKlA4fJv9a.R) | MO-Wheat-Gvt | USC017 | validation | Morocco-Government-Validation |
 | [dvcGW3xxMuK6QCHu1up1lMzu](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/dvcGW3xxMuK6QCHu1up1lMzu.R) | EG-Irrigated-Gvt | USC004 | validation | Egypt-Government-Validation |
+| [xgBDAj4HkerT34oWs9WxSV9z](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/xgBDAj4HkerT34oWs9WxSV9z.R) | NG-Akilimo-MC Sprout | USC013 | MELIA | Nigeria-Sprout-MELIA |
+| [Hk4EgIldoEBiXc1qTtuCnw9N](https://github.com/EiA2030/eia-carob/tree/main/scripts/eia/Hk4EgIldoEBiXc1qTtuCnw9N.R) | NG-Akilimo-SAA | USC008 | MELIA | Nigeria-SAA-MELIA |
