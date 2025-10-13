@@ -1,8 +1,9 @@
 name,type,unit,required,vocabulary,multiple_allowed,valid_min,valid_max,NAok,description,notes,obo
 farming_system,character,,no,,yes,,,yes,"Farming and methods of cultivation",,
-tillage_number,integer,unitless,no,,multiple_allowed,0,10,,Number of tillage passes,,http://purl.obolibrary.org/obo/AGRO_00010003
-experimental_design,character,,no,,multiple_allowed,,,, A plan that states how treatments are allocated to the experimental units during an agronomic trial,,http://purl.obolibrary.org/obo/AGRO_00000343
-nue,numerical,kg/kg,no,,,,,,Nitrogen Use Efficiency is the ratio between the amount of nitrogen fertilizer removed from the field by the crop and the amount of nitrogen fertilizer applied. It provides information about the relative utilization of additional nitrogen applied to a agricultural production system,http://purl.obolibrary.org/obo/AGRO_00000450
-pue,numerical,kg/kg,no,,,,,,Phosphorus Use Efficiency is the ratio between the amount of phosphorus fertilizer removed from the field by the crop and the amount of phosphorus fertilizer applied.,
-kue,numerical,kg/kg,no,,,,,,Potassium Use Efficiency is the ratio between the amount of potassium fertilizer removed from the field by the crop and the amount of potassium fertilizer applied.,
-fertilizer_cost,integer,currency/ha,no,fertilizer,,0,,,Total cost of fertilization over the cropping season per hectare,,
+tillage_number,integer,unitless,no,,multiple_allowed,0,10,,"Number of tillage passes.",,http://purl.obolibrary.org/obo/AGRO_00010003
+experimental_design,character,,no,,multiple_allowed,,,,"A plan that states how treatments are allocated to the experimental units during an agronomic trial",,http://purl.obolibrary.org/obo/AGRO_00000343
+nue,numerical,kg/kg,no,,,,,,"Nitrogen Use Efficiency is the ratio between the amount of nitrogen fertilizer removed from the field by the crop and the amount of nitrogen fertilizer applied. It provides information about the relative utilization of additional nitrogen applied to a agricultural production system",,http://purl.obolibrary.org/obo/AGRO_00000450
+pue,numerical,kg/kg,no,,,,,,"Phosphorus Use Efficiency is the ratio between the amount of phosphorus fertilizer removed from the field by the crop and the amount of phosphorus fertilizer applied.",,
+kue,numerical,kg/kg,no,,,,,,"Potassium Use Efficiency is the ratio between the amount of potassium fertilizer removed from the field by the crop and the amount of potassium fertilizer applied.",,
+fertilizer_cost,integer,currency/ha,no,fertilizer,,0,,,"Total cost of fertilization over the cropping season per hectare.",,
+landscape_position,character,,no,,,,,,"Position of the plot on the hill or slope.",,
