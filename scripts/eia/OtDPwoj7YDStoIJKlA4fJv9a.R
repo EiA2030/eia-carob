@@ -33,7 +33,7 @@ carob_script <- function(path) {
       usecase_name = 'MO-Wheat-Gvt',
       activity = 'validation',
       treatment_vars= "N_fertilizer; P_fertilizer; K_fertilizer",
-      response_vars= "fw_yield;fwy_residue",
+      response_vars= "yield;fwy_residue",
       project = 'Excellence in Agronomy',
       data_type = "experiment",
       carob_date="2025-05-29",

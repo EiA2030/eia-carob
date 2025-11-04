@@ -327,6 +327,12 @@ carob_script <- function(path) {
   
   d$fertilizer_price <- ifelse(d$fertilizer_amount == 0, 0, d$fertilizer_price/d$fertilizer_amount)
   
+  # Fix yield
+  d$yield <- d$fw_yield
+  d$yield_isfresh <- TRUE
+  d$yield_moisture <- NA
+  d$fw_yield <- NULL
+  
   carobiner::write_files(meta, d, path=path)
   
 }
