@@ -383,6 +383,12 @@ carob_script <- function(path) {
 
   # Merge with overall data
   d <- merge(d1, d2, "trial_id")
+  
+  # Fix yield
+  d$yield <- d$fw_yield
+  d$yield_isfresh <- TRUE
+  d$yield_moisture <- NA
+  d$fw_yield <- NULL
 
   carobiner::write_files(meta, d, path = path)
   

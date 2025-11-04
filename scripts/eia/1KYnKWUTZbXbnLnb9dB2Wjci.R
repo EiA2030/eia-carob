@@ -271,6 +271,12 @@ carob_script <- function(path) {
    d$currency[grepl("Malaw", d$currency, ignore.case = TRUE)] <- "MWK"
    d$currency[grepl("Meticais", d$currency, ignore.case = TRUE)] <- "MZN"
    d$currency[grepl("Zamb", d$currency, ignore.case = TRUE)] <- "ZMW"
+   
+   # Fix yield
+   d$yield <- d$dm_yield
+   d$yield_isfresh <- FALSE
+   d$yield_moisture <- NA
+   d$dm_yield <- NULL
 
    carobiner::write_files(meta, d, path=path)
    
