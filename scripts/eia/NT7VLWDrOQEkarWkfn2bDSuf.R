@@ -116,7 +116,6 @@ carob_script <- function(path) {
 
    d$lon <- d$lat <- NULL
 
-   # carobiner::write_files(meta, d, path=path)
-   cat("A test!")
+   carobiner::write_files(meta, d, path=path)
    
 }
